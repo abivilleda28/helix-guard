@@ -3,13 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HELIX GUARD — firma genética de riesgo sin ceder el genoma</title>
-<meta name="description" content="Calcula una firma genética de riesgo de cáncer de mama en tu propio dispositivo. El genoma no sale de aquí.">
+<title>HELIX GUARD — tu ADN no debería ser un activo concursable</title>
+<meta name="description" content="Firma genética de riesgo de cáncer de mama calculada en tu dispositivo. El genoma no sale de aquí.">
+<meta name="theme-color" content="#050F1E">
 <style>
 :root{
-  --ink:#071628; --navy:#0B1F3A; --navy-2:#122F52; --line:#1D3E68;
-  --teal:#0FA3A3; --teal-bright:#3FD8C8; --rose:#E4356B; --amber:#F0A830;
-  --paper:#F7F9FB; --muted:#8FA6C4; --dim:#5F7898;
+  --ink:#050F1E; --ink-2:#0A1B31; --navy:#0B1F3A; --navy-2:#122F52;
+  --line:#1D3E68; --line-soft:#12294A;
+  --teal:#0FA3A3; --teal-bright:#3FD8C8; --teal-dim:#0A6E6E;
+  --rose:#E4356B; --rose-soft:#F27FA0; --amber:#F0A830; --violet:#8A6BF2;
+  --paper:#F4F8FB; --muted:#8FA6C4; --dim:#5F7898;
   --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
 }
@@ -18,206 +21,333 @@ html,body{margin:0;padding:0}
 body{
   background:var(--ink); color:var(--paper); font-family:var(--sans);
   font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+  background-image:
+    radial-gradient(ellipse 1200px 600px at 20% -200px, rgba(15,163,163,.15), transparent 60%),
+    radial-gradient(ellipse 900px 500px at 90% 10%, rgba(138,107,242,.10), transparent 55%),
+    linear-gradient(180deg, #050F1E 0%, #071628 100%);
+  background-attachment:fixed;
 }
 h1,h2,h3{margin:0;font-weight:640;letter-spacing:-0.02em;line-height:1.15}
 p{margin:0 0 .75rem}
-a{color:var(--teal-bright)}
+a{color:var(--teal-bright);text-decoration:none}
+a:hover{text-decoration:underline}
 button{font:inherit}
 .mono{font-family:var(--mono);font-size:.82em;letter-spacing:-0.01em}
+
+@keyframes enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+@keyframes helix-rotate{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes pulse-teal{0%,100%{box-shadow:0 0 0 0 rgba(63,216,200,.5)}70%{box-shadow:0 0 0 8px rgba(63,216,200,0)}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 
 /* ---------- encabezado ---------- */
 header{
   position:sticky;top:0;z-index:40;
-  display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;
-  padding:.7rem 1.1rem;
-  background:rgba(7,22,40,.93);backdrop-filter:blur(10px);
-  border-bottom:1px solid var(--line);
+  display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;
+  padding:.7rem 1.2rem;
+  background:rgba(5,15,30,.85);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line-soft);
 }
-.brand{display:flex;align-items:center;gap:.6rem;margin-right:auto}
-.brand svg{flex:none}
-.brand b{font-size:1.02rem;letter-spacing:.01em;font-weight:680}
-.brand span{color:var(--muted);font-size:.78rem;display:block;letter-spacing:.01em}
+.brand{
+  display:flex;align-items:center;gap:.65rem;margin-right:auto;
+  background:none;border:0;padding:.2rem .4rem;border-radius:8px;cursor:pointer;color:inherit;
+  transition:background .15s;
+}
+.brand:hover{background:rgba(15,163,163,.1)}
+.brand svg{flex:none;filter:drop-shadow(0 0 8px rgba(63,216,200,.35))}
+.brand .name{font-size:1.05rem;letter-spacing:.02em;font-weight:700;line-height:1;background:linear-gradient(90deg,#F4F8FB,#3FD8C8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand .tag{color:var(--muted);font-size:.75rem;display:block;margin-top:.15rem;letter-spacing:.01em}
 .meter{
-  display:flex;align-items:center;gap:.45rem;
-  padding:.32rem .7rem;border:1px solid var(--line);border-radius:999px;
-  background:#0A1F38;font-size:.78rem;color:var(--muted);white-space:nowrap;
+  display:flex;align-items:center;gap:.5rem;
+  padding:.35rem .75rem;border:1px solid var(--line);border-radius:999px;
+  background:rgba(10,31,56,.7);font-size:.78rem;color:var(--muted);white-space:nowrap;
+  transition:border-color .2s;
 }
-.meter b{color:var(--teal-bright);font-family:var(--mono);font-size:.86rem}
-.meter.alert{border-color:var(--rose)}
-.meter.alert b{color:var(--rose)}
-.pulse{width:7px;height:7px;border-radius:50%;background:var(--teal-bright);flex:none}
+.meter b{color:var(--teal-bright);font-family:var(--mono);font-size:.86rem;font-weight:600}
+.meter.alert{border-color:var(--rose);background:rgba(228,53,107,.1)}
+.meter.alert b{color:var(--rose-soft)}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--teal-bright);flex:none;animation:pulse-teal 2.2s infinite}
 
-/* ---------- rejilla ---------- */
-.shell{display:grid;grid-template-columns:210px minmax(0,1fr) 320px;gap:0;min-height:calc(100vh - 58px)}
-nav{border-right:1px solid var(--line);padding:1.4rem .8rem;background:#08192D}
-main{padding:1.8rem 2rem 4rem;min-width:0}
-aside{border-left:1px solid var(--line);background:#08192D;padding:1.4rem 1rem;overflow:auto}
+/* ---------- rejilla de la app ---------- */
+.shell{display:grid;grid-template-columns:220px minmax(0,1fr) 320px;gap:0;min-height:calc(100vh - 58px)}
+nav{border-right:1px solid var(--line-soft);padding:1.4rem .8rem;background:rgba(8,25,45,.5)}
+main{padding:2rem 2.2rem 4rem;min-width:0}
+aside{border-left:1px solid var(--line-soft);background:rgba(8,25,45,.5);padding:1.4rem 1rem;overflow:auto}
 
 /* ---------- pasos ---------- */
 .step{
-  display:grid;grid-template-columns:22px 1fr;gap:.6rem;align-items:start;
+  display:grid;grid-template-columns:24px 1fr;gap:.7rem;align-items:start;
   width:100%;text-align:left;background:none;border:0;color:var(--muted);
-  padding:.6rem .5rem;border-radius:7px;cursor:pointer;line-height:1.3;
+  padding:.65rem .55rem;border-radius:8px;cursor:pointer;line-height:1.3;
+  transition:background .15s,color .15s;
 }
-.step:hover{background:#0D2440;color:var(--paper)}
-.step[aria-current="true"]{background:#102B4C;color:var(--paper)}
+.step:hover{background:rgba(15,163,163,.08);color:var(--paper)}
+.step[aria-current="true"]{background:linear-gradient(90deg,rgba(15,163,163,.18),rgba(15,163,163,.05));color:var(--paper)}
 .step .n{
-  font-family:var(--mono);font-size:.7rem;color:var(--muted);
-  border:1px solid var(--line);border-radius:4px;text-align:center;padding:1px 0;margin-top:1px;
+  font-family:var(--mono);font-size:.7rem;color:var(--muted);font-weight:600;
+  border:1px solid var(--line);border-radius:5px;text-align:center;padding:2px 0;margin-top:1px;
+  transition:all .2s;
 }
-.step[aria-current="true"] .n{border-color:var(--teal);color:var(--teal-bright)}
-.step.done .n{background:var(--teal);border-color:var(--teal);color:#07231F}
-.step em{display:block;font-style:normal;font-size:.74rem;color:var(--muted);margin-top:.1rem}
-.step[aria-current="true"] em{color:#A9C0DC}
+.step[aria-current="true"] .n{border-color:var(--teal);color:var(--teal-bright);box-shadow:0 0 0 2px rgba(63,216,200,.15)}
+.step.done .n{background:var(--teal);border-color:var(--teal);color:#04211F}
+.step em{display:block;font-style:normal;font-size:.74rem;color:var(--muted);margin-top:.1rem;letter-spacing:.01em}
+.step[aria-current="true"] em{color:#B7C9E0}
+.rail-title{font-size:.7rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;padding:0 .5rem;margin-bottom:.5rem;font-weight:600}
+.rail-home{
+  display:block;width:100%;background:none;border:1px dashed var(--line);color:var(--muted);
+  padding:.55rem;border-radius:7px;cursor:pointer;font-size:.8rem;text-align:center;
+  margin-bottom:1rem;transition:all .15s;
+}
+.rail-home:hover{border-color:var(--teal);color:var(--teal-bright);background:rgba(15,163,163,.05)}
 
 /* ---------- paneles ---------- */
-.panel{display:none;max-width:74ch;animation:enter .32s ease}
+.panel{display:none;max-width:74ch;animation:enter .4s ease}
 .panel.on{display:block}
-@keyframes enter{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){.panel{animation:none}}
-.panel > h2{font-size:1.55rem;margin-bottom:.4rem}
-.lede{color:#B7C9E0;margin-bottom:1.4rem;max-width:62ch}
+.panel > h2{font-size:1.65rem;margin-bottom:.5rem;letter-spacing:-.025em}
+.lede{color:#B7C9E0;margin-bottom:1.5rem;max-width:62ch;font-size:1.02rem}
 
-.card{border:1px solid var(--line);border-radius:10px;background:#0A2038;padding:1.1rem 1.2rem;margin:1rem 0}
-.card h3{font-size:.98rem;margin-bottom:.5rem}
+.card{
+  border:1px solid var(--line-soft);border-radius:12px;
+  background:linear-gradient(180deg,rgba(10,32,56,.6),rgba(8,25,45,.4));
+  padding:1.2rem 1.3rem;margin:1rem 0;
+  transition:border-color .2s;
+}
+.card:hover{border-color:var(--line)}
+.card h3{font-size:1rem;margin-bottom:.55rem;letter-spacing:-.01em}
 .card p:last-child{margin-bottom:0}
 
 .btn{
   display:inline-flex;align-items:center;gap:.5rem;
-  padding:.62rem 1.1rem;border-radius:7px;border:1px solid var(--teal);
-  background:var(--teal);color:#04211F;font-weight:620;cursor:pointer;
+  padding:.65rem 1.15rem;border-radius:8px;border:1px solid var(--teal);
+  background:var(--teal);color:#04211F;font-weight:640;cursor:pointer;
+  transition:transform .1s,background .15s,box-shadow .15s;
 }
-.btn:hover{background:var(--teal-bright);border-color:var(--teal-bright)}
+.btn:hover{background:var(--teal-bright);border-color:var(--teal-bright);box-shadow:0 4px 14px rgba(63,216,200,.25)}
+.btn:active{transform:translateY(1px)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .btn.ghost{background:transparent;color:var(--teal-bright)}
-.btn.ghost:hover{background:#0E3049}
+.btn.ghost:hover{background:rgba(15,163,163,.12);box-shadow:none}
 .btn.quiet{background:transparent;border-color:var(--line);color:#B7C9E0}
-.btn.quiet:hover{background:#0E2842;color:var(--paper)}
+.btn.quiet:hover{background:rgba(15,163,163,.08);color:var(--paper);box-shadow:none}
+.btn.big{padding:.9rem 1.6rem;font-size:1.02rem;border-radius:10px}
 :focus-visible{outline:2px solid var(--teal-bright);outline-offset:2px}
 
 .row{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
-label.field{display:block;margin:.8rem 0 .3rem;font-size:.82rem;color:#B7C9E0}
+label.field{display:block;margin:.9rem 0 .35rem;font-size:.82rem;color:#B7C9E0;font-weight:500}
 input[type=password],input[type=text],select,textarea{
-  width:100%;padding:.55rem .7rem;border-radius:7px;border:1px solid var(--line);
-  background:#071B31;color:var(--paper);font:inherit;
+  width:100%;padding:.6rem .75rem;border-radius:8px;border:1px solid var(--line-soft);
+  background:rgba(7,27,49,.7);color:var(--paper);font:inherit;
+  transition:border-color .15s,background .15s;
 }
+input:focus,select:focus,textarea:focus{border-color:var(--teal);background:rgba(7,27,49,.9);outline:none}
 textarea{font-family:var(--mono);font-size:.78rem;min-height:110px;resize:vertical}
 
 .drop{
-  border:1px dashed var(--line);border-radius:10px;padding:1.4rem;text-align:center;
-  background:#08203A;transition:border-color .15s,background .15s;
+  border:1.5px dashed var(--line);border-radius:12px;padding:1.6rem;text-align:center;
+  background:linear-gradient(180deg,rgba(8,32,58,.5),rgba(8,32,58,.2));
+  transition:border-color .2s,background .2s;
 }
-.drop.over{border-color:var(--teal-bright);background:#0C2B44}
+.drop.over{border-color:var(--teal-bright);background:rgba(15,163,163,.1)}
 
 .note{
-  border-left:2px solid var(--amber);padding:.55rem 0 .55rem .8rem;
-  color:#D9C89E;font-size:.86rem;margin:1rem 0;
+  border-left:3px solid var(--amber);padding:.65rem 0 .65rem .9rem;
+  color:#D9C89E;font-size:.86rem;margin:1rem 0;background:rgba(240,168,48,.04);
+  border-radius:0 6px 6px 0;
 }
-.note.grave{border-color:var(--rose);color:#F2AFC3}
+.note.grave{border-color:var(--rose);color:#F2AFC3;background:rgba(228,53,107,.05)}
 
 /* ---------- resultado ---------- */
-.score{display:flex;align-items:baseline;gap:.6rem;margin:.2rem 0 .1rem}
-.score b{font-size:3.2rem;font-weight:700;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+.score{display:flex;align-items:baseline;gap:.6rem;margin:.2rem 0 .1rem;flex-wrap:wrap}
+.score b{font-size:3.4rem;font-weight:700;letter-spacing:-.045em;line-height:1;font-variant-numeric:tabular-nums;background:linear-gradient(180deg,#F4F8FB,#3FD8C8);-webkit-background-clip:text;background-clip:text;color:transparent}
 .score span{color:var(--muted);font-size:.9rem}
 .dist{position:relative;height:56px;margin:1.2rem 0 .4rem}
 .dist svg{width:100%;height:100%;display:block;overflow:visible}
 .axis{display:flex;justify-content:space-between;color:var(--muted);font-size:.72rem;font-family:var(--mono)}
 
-table{width:100%;border-collapse:collapse;font-size:.84rem;margin-top:.6rem}
-th{text-align:left;font-weight:600;color:var(--muted);font-size:.76rem;padding:.35rem .5rem;border-bottom:1px solid var(--line)}
-td{padding:.42rem .5rem;border-bottom:1px solid #10294A;vertical-align:top}
+table{width:100%;border-collapse:collapse;font-size:.85rem;margin-top:.6rem}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:.74rem;padding:.4rem .5rem;border-bottom:1px solid var(--line);text-transform:uppercase;letter-spacing:.06em}
+td{padding:.5rem .5rem;border-bottom:1px solid var(--line-soft);vertical-align:top}
+tbody tr:hover{background:rgba(15,163,163,.04)}
 td.num{font-family:var(--mono);text-align:right;font-size:.8rem;font-variant-numeric:tabular-nums}
-.up{color:var(--rose)}.down{color:var(--teal-bright)}
+.up{color:var(--rose-soft)}.down{color:var(--teal-bright)}
 
-.bars{display:grid;gap:.35rem;margin-top:.7rem}
-.bar{display:grid;grid-template-columns:88px 1fr 62px;gap:.6rem;align-items:center;font-size:.8rem}
-.bar .track{height:6px;background:#0F2A48;border-radius:3px;overflow:hidden}
-.bar .fill{height:100%;background:var(--teal);border-radius:3px;transition:width .5s ease}
-@media (prefers-reduced-motion:reduce){.bar .fill{transition:none}}
+.bars{display:grid;gap:.4rem;margin-top:.7rem}
+.bar{display:grid;grid-template-columns:100px 1fr 62px;gap:.7rem;align-items:center;font-size:.82rem}
+.bar .track{height:8px;background:var(--ink-2);border-radius:4px;overflow:hidden;border:1px solid var(--line-soft)}
+.bar .fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--teal-bright));border-radius:4px;transition:width .8s ease}
+.bar .fill.central{background:linear-gradient(90deg,var(--rose),var(--rose-soft))}
 
-.kv{display:grid;grid-template-columns:auto 1fr;gap:.3rem 1rem;font-size:.85rem;margin:.6rem 0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:.35rem 1.1rem;font-size:.85rem;margin:.7rem 0}
 .kv dt{color:var(--muted)}
 .kv dd{margin:0;font-family:var(--mono);font-size:.8rem;word-break:break-all}
 
 .cipher{
   font-family:var(--mono);font-size:.7rem;line-height:1.5;color:#7FA8C9;
-  background:#061527;border:1px solid var(--line);border-radius:7px;
-  padding:.6rem .7rem;max-height:110px;overflow:auto;word-break:break-all;
+  background:rgba(6,21,39,.8);border:1px solid var(--line-soft);border-radius:8px;
+  padding:.7rem .8rem;max-height:110px;overflow:auto;word-break:break-all;
 }
 
-.toggle{display:flex;gap:.7rem;align-items:flex-start;padding:.7rem 0;border-bottom:1px solid #10294A}
+.toggle{display:flex;gap:.75rem;align-items:flex-start;padding:.8rem 0;border-bottom:1px solid var(--line-soft);cursor:pointer}
 .toggle:last-of-type{border-bottom:0}
-.toggle input{margin-top:.35rem;accent-color:var(--teal);width:16px;height:16px;flex:none}
-.toggle strong{display:block;font-weight:600;font-size:.9rem}
+.toggle input{margin-top:.3rem;accent-color:var(--teal);width:17px;height:17px;flex:none;cursor:pointer}
+.toggle strong{display:block;font-weight:600;font-size:.92rem}
 .toggle span{font-size:.8rem;color:var(--muted)}
 
-/* ---------- registro de custodia ---------- */
-aside h3{font-size:.86rem;margin-bottom:.15rem}
-aside .sub{color:var(--muted);font-size:.75rem;margin-bottom:1rem}
-.thread{position:relative;padding-left:1.1rem}
-.thread::before{content:"";position:absolute;left:4px;top:4px;bottom:4px;width:1px;background:var(--line)}
-.evt{position:relative;padding:0 0 .95rem}
+/* ---------- custodia ---------- */
+aside .sec-title{font-size:.7rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;font-weight:600}
+aside h3{font-size:.92rem;margin:.3rem 0 .1rem}
+aside .sub{color:var(--muted);font-size:.75rem;margin-bottom:1.1rem}
+.thread{position:relative;padding-left:1.2rem}
+.thread::before{content:"";position:absolute;left:4px;top:5px;bottom:5px;width:1px;background:var(--line-soft)}
+.evt{position:relative;padding:0 0 1rem;animation:enter .3s ease}
 .evt::before{
-  content:"";position:absolute;left:-1.1rem;top:.35rem;width:9px;height:9px;border-radius:50%;
+  content:"";position:absolute;left:-1.2rem;top:.35rem;width:10px;height:10px;border-radius:50%;
   background:var(--ink);border:2px solid var(--teal);
 }
-.evt.out::before{border-color:var(--amber);background:var(--ink)}
-.evt.leak::before{border-color:var(--rose);background:var(--rose)}
-.evt b{display:block;font-size:.8rem;font-weight:600}
-.evt em{font-style:normal;display:block;font-size:.74rem;color:var(--muted);font-family:var(--mono)}
-.evt small{display:block;font-size:.74rem;color:#93AAC6;margin-top:.1rem}
+.evt.out::before{border-color:var(--amber)}
+.evt.leak::before{border-color:var(--rose);background:var(--rose);animation:pulse-teal 1.5s infinite}
+.evt b{display:block;font-size:.82rem;font-weight:600}
+.evt em{font-style:normal;display:block;font-size:.72rem;color:var(--muted);font-family:var(--mono);margin-top:.15rem}
+.evt small{display:block;font-size:.74rem;color:#93AAC6;margin-top:.2rem}
 
 /* ---------- pie ---------- */
-footer{border-top:1px solid var(--line);padding:1.4rem 2rem;color:var(--muted);font-size:.78rem}
+footer{border-top:1px solid var(--line-soft);padding:1.5rem 2rem;color:var(--muted);font-size:.78rem;background:rgba(5,15,30,.5)}
 footer a{color:var(--teal-bright)}
+footer p{margin:.2rem 0}
 
 /* ---------- responsivo ---------- */
 .ledger-btn{display:none}
 @media (max-width:1080px){
-  .shell{grid-template-columns:180px minmax(0,1fr)}
+  .shell{grid-template-columns:190px minmax(0,1fr)}
   aside{
     position:fixed;inset:auto 0 0 0;max-height:66vh;border-left:0;border-top:1px solid var(--line);
-    transform:translateY(101%);transition:transform .28s ease;z-index:50;box-shadow:0 -18px 40px rgba(0,0,0,.5);
-    padding-bottom:4.5rem;
+    transform:translateY(101%);transition:transform .3s ease;z-index:50;box-shadow:0 -20px 50px rgba(0,0,0,.5);
+    padding-bottom:5rem;background:var(--ink-2);
   }
   aside.open{transform:none}
   .ledger-btn{
     display:inline-flex;position:fixed;right:1rem;bottom:1rem;z-index:60;
-    padding:.6rem 1rem;border-radius:999px;border:1px solid var(--teal);
-    background:var(--teal);color:#04211F;font-weight:620;cursor:pointer;
-    box-shadow:0 6px 20px rgba(0,0,0,.45);
+    padding:.65rem 1.1rem;border-radius:999px;border:1px solid var(--teal);
+    background:var(--teal);color:#04211F;font-weight:640;cursor:pointer;
+    box-shadow:0 8px 24px rgba(0,0,0,.5);
   }
-  main{padding:1.4rem 1.2rem 5rem}
+  main{padding:1.5rem 1.3rem 5rem}
 }
 @media (max-width:720px){
   .shell{grid-template-columns:1fr}
-  nav{
-    border-right:0;border-bottom:1px solid var(--line);padding:.6rem;
-    display:flex;gap:.4rem;overflow-x:auto;
-  }
-  .step{width:auto;flex:none;grid-template-columns:20px auto;white-space:nowrap}
+  nav{border-right:0;border-bottom:1px solid var(--line-soft);padding:.6rem;display:flex;gap:.4rem;overflow-x:auto}
+  .rail-title,.rail-home{display:none}
+  .step{width:auto;flex:none;grid-template-columns:20px auto;white-space:nowrap;padding:.5rem .7rem}
   .step em{display:none}
-  .score b{font-size:2.5rem}
-  .bar{grid-template-columns:74px 1fr 52px;font-size:.75rem}
-  header{padding:.6rem .8rem}
-  .brand span{display:none}
+  .score b{font-size:2.7rem}
+  .bar{grid-template-columns:80px 1fr 52px;font-size:.78rem}
+  header{padding:.55rem .8rem;gap:.4rem}
+  .brand .tag{display:none}
+  .brand .name{font-size:1rem}
+  main{padding:1.3rem 1rem 5rem}
+  .panel > h2{font-size:1.35rem}
+}
+
+/* ---------- PORTADA ---------- */
+.home{display:none;animation:fadein .5s ease}
+.home.on{display:block}
+.hero{
+  position:relative;padding:3.5rem 2rem 3rem;text-align:center;overflow:hidden;
+  border-bottom:1px solid var(--line-soft);
+}
+.hero-bg{position:absolute;inset:0;opacity:.35;pointer-events:none;display:flex;align-items:center;justify-content:center}
+.hero-bg svg{width:min(800px,110%);height:auto;animation:helix-rotate 60s linear infinite}
+.hero-inner{position:relative;z-index:1;max-width:820px;margin:0 auto}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:.5rem;
+  padding:.35rem .85rem;border-radius:999px;border:1px solid var(--teal);
+  background:rgba(15,163,163,.12);color:var(--teal-bright);font-size:.78rem;
+  font-weight:600;letter-spacing:.02em;margin-bottom:1.4rem;
+}
+.hero-eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--teal-bright);animation:pulse-teal 2s infinite}
+.hero h1{font-size:clamp(2rem,5vw,3.4rem);font-weight:700;letter-spacing:-.035em;margin-bottom:1rem;line-height:1.05}
+.hero h1 .accent{background:linear-gradient(90deg,#3FD8C8,#8A6BF2);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-lede{color:#B7C9E0;font-size:clamp(1rem,1.8vw,1.15rem);max-width:56ch;margin:0 auto 1.8rem;line-height:1.55}
+.hero-cta{display:flex;flex-wrap:wrap;gap:.7rem;justify-content:center}
+
+.home-section{padding:2.5rem 2rem;max-width:1080px;margin:0 auto}
+.home-section h2{font-size:clamp(1.35rem,2.5vw,1.7rem);margin-bottom:.4rem;letter-spacing:-.02em}
+.home-section .subtitle{color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.12em;font-weight:600;margin-bottom:.5rem;display:block}
+.home-section .h-lede{color:#B7C9E0;max-width:65ch;margin-bottom:1.6rem}
+
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem}
+.pillar{
+  padding:1.4rem 1.3rem;border:1px solid var(--line-soft);border-radius:14px;
+  background:linear-gradient(180deg,rgba(10,32,56,.55),rgba(8,25,45,.3));
+  transition:transform .2s,border-color .2s;
+}
+.pillar:hover{transform:translateY(-3px);border-color:var(--teal-dim)}
+.pillar .icon{
+  width:38px;height:38px;border-radius:9px;
+  background:linear-gradient(135deg,rgba(15,163,163,.25),rgba(138,107,242,.2));
+  display:flex;align-items:center;justify-content:center;margin-bottom:.9rem;
+  color:var(--teal-bright);
+}
+.pillar h3{font-size:1.02rem;margin-bottom:.4rem}
+.pillar p{color:#B7C9E0;font-size:.88rem;margin:0}
+
+.author{
+  display:flex;gap:1.3rem;align-items:flex-start;
+  padding:1.6rem;border:1px solid var(--line-soft);border-radius:14px;
+  background:linear-gradient(135deg,rgba(15,163,163,.08),rgba(138,107,242,.05));
+}
+.author-avatar{
+  width:64px;height:64px;flex:none;border-radius:14px;
+  background:linear-gradient(135deg,var(--teal),var(--violet));
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.6rem;font-weight:700;color:#04211F;letter-spacing:-.02em;
+}
+.author h3{font-size:1.1rem;margin-bottom:.3rem}
+.author .role{color:var(--teal-bright);font-size:.82rem;font-weight:600;margin-bottom:.6rem;letter-spacing:.01em}
+.author p{color:#B7C9E0;font-size:.9rem;margin-bottom:.5rem}
+.author a{display:inline-flex;align-items:center;gap:.35rem;font-size:.82rem}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin:1.5rem 0}
+.stat{padding:1.2rem 1rem;border:1px solid var(--line-soft);border-radius:12px;background:rgba(8,25,45,.4);text-align:center}
+.stat b{display:block;font-size:1.9rem;font-weight:700;letter-spacing:-.03em;background:linear-gradient(180deg,#F4F8FB,#3FD8C8);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1;margin-bottom:.35rem;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:.78rem;line-height:1.35;display:block}
+
+.quote{
+  border-left:3px solid var(--teal);padding:1rem 0 1rem 1.2rem;
+  font-size:1.05rem;color:#D8E5F0;line-height:1.5;margin:1.5rem 0;
+  font-style:italic;
+}
+.quote cite{display:block;color:var(--muted);font-size:.82rem;margin-top:.5rem;font-style:normal}
+
+.diff-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.8rem;margin-top:1rem}
+.diff{padding:1rem 1.1rem;border:1px solid var(--line-soft);border-radius:10px;background:rgba(10,32,56,.4)}
+.diff-x{color:var(--rose-soft);font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem}
+.diff-o{color:var(--teal-bright);font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem}
+.diff p{font-size:.88rem;color:#B7C9E0;margin:0}
+
+@media (max-width:720px){
+  .hero{padding:2.5rem 1.2rem 2rem}
+  .home-section{padding:2rem 1.2rem}
+  .author{flex-direction:column;gap:.9rem;padding:1.3rem}
+  .stat b{font-size:1.5rem}
 }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="brand">
-    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M7 2c0 5 10 5 10 10S7 17 7 22" stroke="#0FA3A3" stroke-width="1.6" stroke-linecap="round"/>
-      <path d="M17 2c0 5-10 5-10 10s10 5 10 10" stroke="#3FD8C8" stroke-width="1.6" stroke-linecap="round"/>
-      <path d="M9 6.5h6M8 10h8M8 14h8M9 17.5h6" stroke="#1D3E68" stroke-width="1.2" stroke-linecap="round"/>
+  <button class="brand" id="brandBtn" aria-label="Volver al inicio">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M7 2c0 5 10 5 10 10S7 17 7 22" stroke="#0FA3A3" stroke-width="1.7" stroke-linecap="round"/>
+      <path d="M17 2c0 5-10 5-10 10s10 5 10 10" stroke="#3FD8C8" stroke-width="1.7" stroke-linecap="round"/>
+      <path d="M9 6.5h6M8 10h8M8 14h8M9 17.5h6" stroke="#1D3E68" stroke-width="1.3" stroke-linecap="round"/>
     </svg>
-    <div>
-      <b>HELIX GUARD</b>
-      <span>Tu ADN se queda contigo</span>
+    <div style="text-align:left">
+      <span class="name">HELIX GUARD</span>
+      <span class="tag">Tu ADN se queda contigo</span>
     </div>
-  </div>
+  </button>
   <div class="meter" id="meterNet" title="Peticiones de red interceptadas desde que se abrió la app">
     <i class="pulse"></i> red <b id="netCount">0</b> solicitudes
   </div>
@@ -226,28 +356,150 @@ footer a{color:var(--teal-bright)}
   </div>
 </header>
 
-<div class="shell">
+<!-- =============== PORTADA =============== -->
+<div class="home on" id="home">
 
-  <nav id="rail" aria-label="Pasos"></nav>
+  <section class="hero">
+    <div class="hero-bg" aria-hidden="true">
+      <svg viewBox="0 0 800 400" fill="none">
+        <g stroke="#3FD8C8" stroke-width="1.2" stroke-linecap="round" opacity=".55">
+          <path d="M100 50 Q400 200 700 350"/>
+          <path d="M100 350 Q400 200 700 50"/>
+        </g>
+        <g stroke="#8A6BF2" stroke-width="1" stroke-linecap="round" opacity=".35">
+          <line x1="150" y1="80" x2="150" y2="320"/>
+          <line x1="220" y1="105" x2="220" y2="295"/>
+          <line x1="290" y1="135" x2="290" y2="265"/>
+          <line x1="360" y1="165" x2="360" y2="235"/>
+          <line x1="440" y1="165" x2="440" y2="235"/>
+          <line x1="510" y1="135" x2="510" y2="265"/>
+          <line x1="580" y1="105" x2="580" y2="295"/>
+          <line x1="650" y1="80" x2="650" y2="320"/>
+        </g>
+      </svg>
+    </div>
+    <div class="hero-inner">
+      <div class="hero-eyebrow">Prototipo funcional · sin telemetría · sin CDN</div>
+      <h1>Tu ADN no debería ser un <span class="accent">activo concursable</span>.</h1>
+      <p class="hero-lede">Firma genética de riesgo de cáncer de mama que se calcula en tu propio dispositivo. El genoma nunca sale de aquí — y puedes comprobarlo tú misma en la pestaña de red del navegador.</p>
+      <div class="hero-cta">
+        <button class="btn big" id="ctaStart">Probar la demo</button>
+        <button class="btn quiet big" id="ctaLearn">Cómo funciona</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="home-section" id="learn">
+    <span class="subtitle">Por qué existe HELIX GUARD</span>
+    <h2>Un genoma filtrado no se puede rotar como una contraseña.</h2>
+    <p class="h-lede">En marzo de 2025, 23andMe se declaró en quiebra. Los genomas de más de 15 millones de personas entraron a subasta judicial y se vendieron por 305 millones de dólares. Un millón novecientas mil personas corrieron a borrar sus datos. Llegaron tarde: un genoma no se puede anonimizar, y delata a madre, hermanas e hijas que aún no existen.</p>
+
+    <div class="stats">
+      <div class="stat"><b>2.3M</b><span>casos nuevos de cáncer de mama al año en el mundo · GLOBOCAN 2022</span></div>
+      <div class="stat"><b>55.9%</b><span>diagnosticado ya localmente avanzado en México · Consenso Mexicano</span></div>
+      <div class="stat"><b>79%</b><span>de los estudios genómicos son de ascendencia europea · Martin et al. 2019</span></div>
+      <div class="stat"><b>$7.42M</b><span>costo promedio de una brecha en salud · IBM 2025</span></div>
+    </div>
+
+    <blockquote class="quote">
+      Un genoma no es un dato personal más. Identifica a la persona, identifica a su familia, y no caduca. El consentimiento individual, tal como se practica, es estructuralmente insuficiente.
+      <cite>— Del documento de bioética del proyecto</cite>
+    </blockquote>
+  </section>
+
+  <section class="home-section">
+    <span class="subtitle">Tres piezas, un principio</span>
+    <h2>El dato sensible no se mueve — se mueve el cómputo.</h2>
+    <p class="h-lede">Cuando el genoma no viaja, buena parte de la superficie de ataque desaparece por construcción, no por control.</p>
+
+    <div class="grid-3">
+      <article class="pillar">
+        <div class="icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2 4 6v6c0 5 3.5 9 8 10 4.5-1 8-5 8-10V6l-8-4z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></div>
+        <h3>Puntaje poligénico local</h3>
+        <p>Suma ponderada de dosis alélicas calculada en tu navegador en 1 ms. Compatible con archivos del PGS Catalog. Cero llamadas de red.</p>
+      </article>
+      <article class="pillar">
+        <div class="icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="6" cy="6" r="2.5" stroke="currentColor" stroke-width="1.7"/><circle cx="18" cy="6" r="2.5" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="18" r="2.5" stroke="currentColor" stroke-width="1.7"/><path d="M7.5 7.5 11 16M16.5 7.5 13 16" stroke="currentColor" stroke-width="1.4"/></svg></div>
+        <h3>Aprendizaje federado con DP</h3>
+        <p>Cinco hospitales entrenan un modelo entre todos sin intercambiar expedientes. Sólo viajan vectores de pesos, recortados y con ruido gaussiano.</p>
+      </article>
+      <article class="pillar">
+        <div class="icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="10" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.7"/></svg></div>
+        <h3>Cifrado homomórfico</h3>
+        <p>El agregador suma aportaciones de los cinco hospitales sin poder leer ninguna. Paillier real, ejecutándose en tu navegador.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="home-section">
+    <span class="subtitle">Nuestro diferenciador</span>
+    <h2>Nadie más lo hace así.</h2>
+    <div class="diff-grid">
+      <div class="diff">
+        <div class="diff-x">Lo que hace 23andMe</div>
+        <p>Centraliza tu genoma en sus servidores. Puede ser filtrado, vendido en quiebra o usado sin ti.</p>
+      </div>
+      <div class="diff">
+        <div class="diff-x">Lo que hace Lifebit</div>
+        <p>Soberanía federada, pero para gobiernos y farmacéuticas. La paciente sigue sin voz en el reparto.</p>
+      </div>
+      <div class="diff">
+        <div class="diff-o">Lo que hace HELIX GUARD</div>
+        <p>Soberanía a nivel de la persona. Resultado clínicamente interpretable sin que el genoma salga del dispositivo.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="home-section">
+    <span class="subtitle">Quién está detrás</span>
+    <h2>Un proyecto nacido de leer genomas ajenos.</h2>
+
+    <div class="author">
+      <div class="author-avatar">AV</div>
+      <div>
+        <h3>Abby Villeda</h3>
+        <div class="role">Bióloga · Bioinformática de splicing alternativo</div>
+        <p>Bióloga especializada en bioinformática, con trabajo en <em>splicing alternativo</em>: cómo una misma secuencia de ADN produce proteínas distintas según cómo se corte y se pegue. Llevo años trabajando con genomas de otras personas, y este proyecto nace de una pregunta que me hice mientras lo hacía: <em>¿de quién son esos datos cuando salen del laboratorio?</em></p>
+        <p>HELIX GUARD es mi propuesta al concurso de innovación en IA y Ciberseguridad WomenCISO Gen 4 &amp; MenCISO Gen 1: llevar la soberanía del dato hasta la persona a la que ese dato pertenece.</p>
+        <a href="https://github.com/abivilleda28" target="_blank" rel="noopener">→ github.com/abivilleda28</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="home-section" style="text-align:center;padding-top:1rem;padding-bottom:4rem">
+    <h2 style="margin-bottom:.6rem">¿Lista para comprobarlo?</h2>
+    <p class="h-lede" style="margin:0 auto 1.4rem">Cinco pasos, tres minutos. Al terminar, tu contador de red seguirá en cero.</p>
+    <button class="btn big" id="ctaStart2">Empezar la demo →</button>
+  </section>
+
+</div>
+
+<!-- =============== APP =============== -->
+<div class="shell" id="app" style="display:none">
+
+  <nav aria-label="Pasos">
+    <button class="rail-home" id="railHome">← Volver al inicio</button>
+    <div class="rail-title">Recorrido</div>
+    <div id="rail"></div>
+  </nav>
 
   <main>
 
-    <!-- 1 · BÓVEDA ------------------------------------------------------->
     <section class="panel on" id="p-vault" aria-labelledby="h-vault">
       <h2 id="h-vault">Carga tu genoma en la bóveda local</h2>
       <p class="lede">El archivo se lee con la API de ficheros del navegador y se queda en la memoria de esta pestaña. Puedes sellarlo con una frase de paso: se cifra con AES-256-GCM usando una clave derivada de tu frase, que nunca se guarda ni se envía.</p>
 
       <div class="drop" id="drop">
-        <p>Arrastra aquí tu archivo de genotipos, o</p>
+        <p style="margin-bottom:.7rem">Arrastra aquí tu archivo de genotipos, o</p>
         <div class="row" style="justify-content:center">
           <button class="btn quiet" id="pickFile">Elegir archivo</button>
           <button class="btn ghost" data-demo="medio">Usar perfil sintético</button>
         </div>
         <input type="file" id="file" accept=".txt,.csv,.tsv,.vcf" hidden>
-        <p style="margin:.8rem 0 0;font-size:.8rem;color:var(--muted)">Acepta datos crudos tipo <span class="mono">rsid / cromosoma / posición / genotipo</span> y VCF simplificado.</p>
+        <p style="margin:.9rem 0 0;font-size:.8rem;color:var(--muted)">Acepta datos crudos tipo <span class="mono">rsid / cromosoma / posición / genotipo</span> y VCF simplificado.</p>
       </div>
 
-      <div class="row" style="margin-top:.7rem">
+      <div class="row" style="margin-top:.8rem">
         <button class="btn quiet" data-demo="bajo">Perfil sintético bajo</button>
         <button class="btn quiet" data-demo="medio">Medio</button>
         <button class="btn quiet" data-demo="alto">Alto</button>
@@ -258,7 +510,7 @@ footer a{color:var(--teal-bright)}
         <dl class="kv" id="fileMeta"></dl>
         <label class="field" for="pass">Frase de paso para sellar la bóveda</label>
         <input type="password" id="pass" placeholder="mínimo 8 caracteres" autocomplete="new-password">
-        <div class="row" style="margin-top:.7rem">
+        <div class="row" style="margin-top:.8rem">
           <button class="btn" id="seal">Sellar bóveda</button>
           <button class="btn quiet" id="unseal" disabled>Abrir bóveda</button>
           <button class="btn quiet" id="wipe">Borrar del dispositivo</button>
@@ -269,7 +521,6 @@ footer a{color:var(--teal-bright)}
       <div class="note">Los tres perfiles sintéticos se generaron con un muestreo de Hardy-Weinberg sobre las frecuencias del panel. No corresponden a ninguna persona ni a ninguna cohorte real.</div>
     </section>
 
-    <!-- 2 · FIRMA DE RIESGO ---------------------------------------------->
     <section class="panel" id="p-risk" aria-labelledby="h-risk">
       <h2 id="h-risk">Firma de riesgo poligénico</h2>
       <p class="lede">Suma ponderada de dosis alélicas sobre el panel cargado. El cálculo entero ocurre en esta pestaña; ninguna variante viaja a ningún servidor.</p>
@@ -283,7 +534,6 @@ footer a{color:var(--teal-bright)}
       <div id="riskOut"></div>
     </section>
 
-    <!-- 3 · FEDERADO ------------------------------------------------------>
     <section class="panel" id="p-fed" aria-labelledby="h-fed">
       <h2 id="h-fed">Clasificador multigénico entrenado en federado</h2>
       <p class="lede">Cinco nodos con cohortes distintas entrenan un clasificador de estado de receptor de estrógeno. Cada ronda, un nodo envía sólo su vector de pesos, recortado y con ruido gaussiano. Los ejemplos nunca salen de su institución.</p>
@@ -302,7 +552,6 @@ footer a{color:var(--teal-bright)}
       <div id="fedOut"></div>
     </section>
 
-    <!-- 4 · CIFRADO HOMOMÓRFICO ------------------------------------------->
     <section class="panel" id="p-he" aria-labelledby="h-he">
       <h2 id="h-he">Agregación sobre datos cifrados</h2>
       <p class="lede">Aquí el agregador suma las aportaciones de los cinco nodos sin poder leer ninguna. Es Paillier real, ejecutándose en tu navegador: la suma se hace multiplicando textos cifrados módulo n².</p>
@@ -320,7 +569,6 @@ footer a{color:var(--teal-bright)}
       <div class="note">El tamaño de clave está elegido para que la demostración corra en menos de un segundo. Un despliegue real necesita n ≥ 3072 bits, o un esquema de red como CKKS sobre una biblioteca auditada (Microsoft SEAL, OpenFHE).</div>
     </section>
 
-    <!-- 5 · SOBERANÍA ------------------------------------------------------>
     <section class="panel" id="p-gov" aria-labelledby="h-gov">
       <h2 id="h-gov">Consentimiento y soberanía</h2>
       <p class="lede">Cada uso de tus datos es una casilla separada que puedes apagar en cualquier momento. Apagar una casilla detiene el uso desde la siguiente ronda de entrenamiento; no hay copia de tu genoma en ningún otro lugar que pueda seguir usándose.</p>
@@ -346,6 +594,7 @@ footer a{color:var(--teal-bright)}
   </main>
 
   <aside id="ledger" aria-label="Registro de custodia">
+    <div class="sec-title">Auditoría en vivo</div>
     <h3>Línea de custodia</h3>
     <p class="sub">Cada operación, y qué salió del dispositivo.</p>
     <div class="thread" id="thread"></div>
@@ -358,6 +607,7 @@ footer a{color:var(--teal-bright)}
 <footer>
   <p>HELIX GUARD · prototipo de investigación · Concurso de innovación en IA y ciberseguridad, WomenCISO 4 &amp; MenCISO Gen 1.</p>
   <p>Datos de demostración sintéticos. Panel de referencia: PGS Catalog <span class="mono">PGS000004</span> (Mavaddat et al., <em>Am J Hum Genet</em> 2019). No es un dispositivo médico.</p>
+  <p>Por <a href="https://github.com/abivilleda28" target="_blank" rel="noopener">Abby Villeda</a>, bióloga · bioinformática de splicing alternativo.</p>
 </footer>
 
 <script type="module">

@@ -95,7 +95,32 @@ function markOut(bytes, why) {
   logEvent({ kind: 'out', title: 'Sale del dispositivo', meta: `${bytes} B cifrados`, note: why });
 }
 
-/* ---------- navegación ---------- */
+/* ---------- navegación entre portada y app ---------- */
+const home = $('#home');
+const app = $('#app');
+
+function showHome() {
+  home.classList.add('on');
+  app.style.display = 'none';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showApp(targetPanel = 'p-vault') {
+  home.classList.remove('on');
+  app.style.display = 'grid';
+  goto(targetPanel);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+$('#brandBtn').addEventListener('click', showHome);
+$('#railHome').addEventListener('click', showHome);
+$('#ctaStart').addEventListener('click', () => showApp('p-vault'));
+$('#ctaStart2').addEventListener('click', () => showApp('p-vault'));
+$('#ctaLearn').addEventListener('click', () => {
+  document.getElementById('learn').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+/* ---------- navegación entre pasos ---------- */
 const STEPS = [
   ['p-vault', 'Bóveda', 'carga y sella el genoma'],
   ['p-risk', 'Firma de riesgo', 'PRS local y explicable'],
@@ -110,7 +135,7 @@ STEPS.forEach(([id, name, sub], i) => {
   b.className = 'step';
   b.dataset.target = id;
   b.setAttribute('aria-current', i === 0 ? 'true' : 'false');
-  b.innerHTML = `<span class="n">${i + 1}</span><span><strong>${name}</strong><em>${sub}</em></span>`;
+  b.innerHTML = `<span class="n"><span>${i + 1}</span></span><span><strong>${name}</strong><em>${sub}</em></span>`;
   b.addEventListener('click', () => goto(id));
   rail.appendChild(b);
 });
