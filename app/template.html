@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HELIX GUARD — firma genética de riesgo sin ceder el genoma</title>
+<meta name="description" content="Calcula una firma genética de riesgo de cáncer de mama en tu propio dispositivo. El genoma no sale de aquí.">
+<style>
+:root{
+  --ink:#071628; --navy:#0B1F3A; --navy-2:#122F52; --line:#1D3E68;
+  --teal:#0FA3A3; --teal-bright:#3FD8C8; --rose:#E4356B; --amber:#F0A830;
+  --paper:#F7F9FB; --muted:#8FA6C4; --dim:#5F7898;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--ink); color:var(--paper); font-family:var(--sans);
+  font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{margin:0;font-weight:640;letter-spacing:-0.02em;line-height:1.15}
+p{margin:0 0 .75rem}
+a{color:var(--teal-bright)}
+button{font:inherit}
+.mono{font-family:var(--mono);font-size:.82em;letter-spacing:-0.01em}
+
+/* ---------- encabezado ---------- */
+header{
+  position:sticky;top:0;z-index:40;
+  display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;
+  padding:.7rem 1.1rem;
+  background:rgba(7,22,40,.93);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:center;gap:.6rem;margin-right:auto}
+.brand svg{flex:none}
+.brand b{font-size:1.02rem;letter-spacing:.01em;font-weight:680}
+.brand span{color:var(--muted);font-size:.78rem;display:block;letter-spacing:.01em}
+.meter{
+  display:flex;align-items:center;gap:.45rem;
+  padding:.32rem .7rem;border:1px solid var(--line);border-radius:999px;
+  background:#0A1F38;font-size:.78rem;color:var(--muted);white-space:nowrap;
+}
+.meter b{color:var(--teal-bright);font-family:var(--mono);font-size:.86rem}
+.meter.alert{border-color:var(--rose)}
+.meter.alert b{color:var(--rose)}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--teal-bright);flex:none}
+
+/* ---------- rejilla ---------- */
+.shell{display:grid;grid-template-columns:210px minmax(0,1fr) 320px;gap:0;min-height:calc(100vh - 58px)}
+nav{border-right:1px solid var(--line);padding:1.4rem .8rem;background:#08192D}
+main{padding:1.8rem 2rem 4rem;min-width:0}
+aside{border-left:1px solid var(--line);background:#08192D;padding:1.4rem 1rem;overflow:auto}
+
+/* ---------- pasos ---------- */
+.step{
+  display:grid;grid-template-columns:22px 1fr;gap:.6rem;align-items:start;
+  width:100%;text-align:left;background:none;border:0;color:var(--muted);
+  padding:.6rem .5rem;border-radius:7px;cursor:pointer;line-height:1.3;
+}
+.step:hover{background:#0D2440;color:var(--paper)}
+.step[aria-current="true"]{background:#102B4C;color:var(--paper)}
+.step .n{
+  font-family:var(--mono);font-size:.7rem;color:var(--muted);
+  border:1px solid var(--line);border-radius:4px;text-align:center;padding:1px 0;margin-top:1px;
+}
+.step[aria-current="true"] .n{border-color:var(--teal);color:var(--teal-bright)}
+.step.done .n{background:var(--teal);border-color:var(--teal);color:#07231F}
+.step em{display:block;font-style:normal;font-size:.74rem;color:var(--muted);margin-top:.1rem}
+.step[aria-current="true"] em{color:#A9C0DC}
+
+/* ---------- paneles ---------- */
+.panel{display:none;max-width:74ch;animation:enter .32s ease}
+.panel.on{display:block}
+@keyframes enter{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.panel{animation:none}}
+.panel > h2{font-size:1.55rem;margin-bottom:.4rem}
+.lede{color:#B7C9E0;margin-bottom:1.4rem;max-width:62ch}
+
+.card{border:1px solid var(--line);border-radius:10px;background:#0A2038;padding:1.1rem 1.2rem;margin:1rem 0}
+.card h3{font-size:.98rem;margin-bottom:.5rem}
+.card p:last-child{margin-bottom:0}
+
+.btn{
+  display:inline-flex;align-items:center;gap:.5rem;
+  padding:.62rem 1.1rem;border-radius:7px;border:1px solid var(--teal);
+  background:var(--teal);color:#04211F;font-weight:620;cursor:pointer;
+}
+.btn:hover{background:var(--teal-bright);border-color:var(--teal-bright)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--teal-bright)}
+.btn.ghost:hover{background:#0E3049}
+.btn.quiet{background:transparent;border-color:var(--line);color:#B7C9E0}
+.btn.quiet:hover{background:#0E2842;color:var(--paper)}
+:focus-visible{outline:2px solid var(--teal-bright);outline-offset:2px}
+
+.row{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
+label.field{display:block;margin:.8rem 0 .3rem;font-size:.82rem;color:#B7C9E0}
+input[type=password],input[type=text],select,textarea{
+  width:100%;padding:.55rem .7rem;border-radius:7px;border:1px solid var(--line);
+  background:#071B31;color:var(--paper);font:inherit;
+}
+textarea{font-family:var(--mono);font-size:.78rem;min-height:110px;resize:vertical}
+
+.drop{
+  border:1px dashed var(--line);border-radius:10px;padding:1.4rem;text-align:center;
+  background:#08203A;transition:border-color .15s,background .15s;
+}
+.drop.over{border-color:var(--teal-bright);background:#0C2B44}
+
+.note{
+  border-left:2px solid var(--amber);padding:.55rem 0 .55rem .8rem;
+  color:#D9C89E;font-size:.86rem;margin:1rem 0;
+}
+.note.grave{border-color:var(--rose);color:#F2AFC3}
+
+/* ---------- resultado ---------- */
+.score{display:flex;align-items:baseline;gap:.6rem;margin:.2rem 0 .1rem}
+.score b{font-size:3.2rem;font-weight:700;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+.score span{color:var(--muted);font-size:.9rem}
+.dist{position:relative;height:56px;margin:1.2rem 0 .4rem}
+.dist svg{width:100%;height:100%;display:block;overflow:visible}
+.axis{display:flex;justify-content:space-between;color:var(--muted);font-size:.72rem;font-family:var(--mono)}
+
+table{width:100%;border-collapse:collapse;font-size:.84rem;margin-top:.6rem}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:.76rem;padding:.35rem .5rem;border-bottom:1px solid var(--line)}
+td{padding:.42rem .5rem;border-bottom:1px solid #10294A;vertical-align:top}
+td.num{font-family:var(--mono);text-align:right;font-size:.8rem;font-variant-numeric:tabular-nums}
+.up{color:var(--rose)}.down{color:var(--teal-bright)}
+
+.bars{display:grid;gap:.35rem;margin-top:.7rem}
+.bar{display:grid;grid-template-columns:88px 1fr 62px;gap:.6rem;align-items:center;font-size:.8rem}
+.bar .track{height:6px;background:#0F2A48;border-radius:3px;overflow:hidden}
+.bar .fill{height:100%;background:var(--teal);border-radius:3px;transition:width .5s ease}
+@media (prefers-reduced-motion:reduce){.bar .fill{transition:none}}
+
+.kv{display:grid;grid-template-columns:auto 1fr;gap:.3rem 1rem;font-size:.85rem;margin:.6rem 0}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;font-family:var(--mono);font-size:.8rem;word-break:break-all}
+
+.cipher{
+  font-family:var(--mono);font-size:.7rem;line-height:1.5;color:#7FA8C9;
+  background:#061527;border:1px solid var(--line);border-radius:7px;
+  padding:.6rem .7rem;max-height:110px;overflow:auto;word-break:break-all;
+}
+
+.toggle{display:flex;gap:.7rem;align-items:flex-start;padding:.7rem 0;border-bottom:1px solid #10294A}
+.toggle:last-of-type{border-bottom:0}
+.toggle input{margin-top:.35rem;accent-color:var(--teal);width:16px;height:16px;flex:none}
+.toggle strong{display:block;font-weight:600;font-size:.9rem}
+.toggle span{font-size:.8rem;color:var(--muted)}
+
+/* ---------- registro de custodia ---------- */
+aside h3{font-size:.86rem;margin-bottom:.15rem}
+aside .sub{color:var(--muted);font-size:.75rem;margin-bottom:1rem}
+.thread{position:relative;padding-left:1.1rem}
+.thread::before{content:"";position:absolute;left:4px;top:4px;bottom:4px;width:1px;background:var(--line)}
+.evt{position:relative;padding:0 0 .95rem}
+.evt::before{
+  content:"";position:absolute;left:-1.1rem;top:.35rem;width:9px;height:9px;border-radius:50%;
+  background:var(--ink);border:2px solid var(--teal);
+}
+.evt.out::before{border-color:var(--amber);background:var(--ink)}
+.evt.leak::before{border-color:var(--rose);background:var(--rose)}
+.evt b{display:block;font-size:.8rem;font-weight:600}
+.evt em{font-style:normal;display:block;font-size:.74rem;color:var(--muted);font-family:var(--mono)}
+.evt small{display:block;font-size:.74rem;color:#93AAC6;margin-top:.1rem}
+
+/* ---------- pie ---------- */
+footer{border-top:1px solid var(--line);padding:1.4rem 2rem;color:var(--muted);font-size:.78rem}
+footer a{color:var(--teal-bright)}
+
+/* ---------- responsivo ---------- */
+.ledger-btn{display:none}
+@media (max-width:1080px){
+  .shell{grid-template-columns:180px minmax(0,1fr)}
+  aside{
+    position:fixed;inset:auto 0 0 0;max-height:66vh;border-left:0;border-top:1px solid var(--line);
+    transform:translateY(101%);transition:transform .28s ease;z-index:50;box-shadow:0 -18px 40px rgba(0,0,0,.5);
+    padding-bottom:4.5rem;
+  }
+  aside.open{transform:none}
+  .ledger-btn{
+    display:inline-flex;position:fixed;right:1rem;bottom:1rem;z-index:60;
+    padding:.6rem 1rem;border-radius:999px;border:1px solid var(--teal);
+    background:var(--teal);color:#04211F;font-weight:620;cursor:pointer;
+    box-shadow:0 6px 20px rgba(0,0,0,.45);
+  }
+  main{padding:1.4rem 1.2rem 5rem}
+}
+@media (max-width:720px){
+  .shell{grid-template-columns:1fr}
+  nav{
+    border-right:0;border-bottom:1px solid var(--line);padding:.6rem;
+    display:flex;gap:.4rem;overflow-x:auto;
+  }
+  .step{width:auto;flex:none;grid-template-columns:20px auto;white-space:nowrap}
+  .step em{display:none}
+  .score b{font-size:2.5rem}
+  .bar{grid-template-columns:74px 1fr 52px;font-size:.75rem}
+  header{padding:.6rem .8rem}
+  .brand span{display:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M7 2c0 5 10 5 10 10S7 17 7 22" stroke="#0FA3A3" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M17 2c0 5-10 5-10 10s10 5 10 10" stroke="#3FD8C8" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M9 6.5h6M8 10h8M8 14h8M9 17.5h6" stroke="#1D3E68" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <b>HELIX GUARD</b>
+      <span>Tu ADN se queda contigo</span>
+    </div>
+  </div>
+  <div class="meter" id="meterNet" title="Peticiones de red interceptadas desde que se abrió la app">
+    <i class="pulse"></i> red <b id="netCount">0</b> solicitudes
+  </div>
+  <div class="meter" id="meterOut" title="Bytes de genotipo en claro que han salido del dispositivo">
+    genoma fuera <b id="outCount">0 B</b>
+  </div>
+</header>
+
+<div class="shell">
+
+  <nav id="rail" aria-label="Pasos"></nav>
+
+  <main>
+
+    <!-- 1 · BÓVEDA ------------------------------------------------------->
+    <section class="panel on" id="p-vault" aria-labelledby="h-vault">
+      <h2 id="h-vault">Carga tu genoma en la bóveda local</h2>
+      <p class="lede">El archivo se lee con la API de ficheros del navegador y se queda en la memoria de esta pestaña. Puedes sellarlo con una frase de paso: se cifra con AES-256-GCM usando una clave derivada de tu frase, que nunca se guarda ni se envía.</p>
+
+      <div class="drop" id="drop">
+        <p>Arrastra aquí tu archivo de genotipos, o</p>
+        <div class="row" style="justify-content:center">
+          <button class="btn quiet" id="pickFile">Elegir archivo</button>
+          <button class="btn ghost" data-demo="medio">Usar perfil sintético</button>
+        </div>
+        <input type="file" id="file" accept=".txt,.csv,.tsv,.vcf" hidden>
+        <p style="margin:.8rem 0 0;font-size:.8rem;color:var(--muted)">Acepta datos crudos tipo <span class="mono">rsid / cromosoma / posición / genotipo</span> y VCF simplificado.</p>
+      </div>
+
+      <div class="row" style="margin-top:.7rem">
+        <button class="btn quiet" data-demo="bajo">Perfil sintético bajo</button>
+        <button class="btn quiet" data-demo="medio">Medio</button>
+        <button class="btn quiet" data-demo="alto">Alto</button>
+      </div>
+
+      <div class="card" id="fileCard" hidden>
+        <h3>Archivo en memoria</h3>
+        <dl class="kv" id="fileMeta"></dl>
+        <label class="field" for="pass">Frase de paso para sellar la bóveda</label>
+        <input type="password" id="pass" placeholder="mínimo 8 caracteres" autocomplete="new-password">
+        <div class="row" style="margin-top:.7rem">
+          <button class="btn" id="seal">Sellar bóveda</button>
+          <button class="btn quiet" id="unseal" disabled>Abrir bóveda</button>
+          <button class="btn quiet" id="wipe">Borrar del dispositivo</button>
+        </div>
+        <div id="vaultOut"></div>
+      </div>
+
+      <div class="note">Los tres perfiles sintéticos se generaron con un muestreo de Hardy-Weinberg sobre las frecuencias del panel. No corresponden a ninguna persona ni a ninguna cohorte real.</div>
+    </section>
+
+    <!-- 2 · FIRMA DE RIESGO ---------------------------------------------->
+    <section class="panel" id="p-risk" aria-labelledby="h-risk">
+      <h2 id="h-risk">Firma de riesgo poligénico</h2>
+      <p class="lede">Suma ponderada de dosis alélicas sobre el panel cargado. El cálculo entero ocurre en esta pestaña; ninguna variante viaja a ningún servidor.</p>
+
+      <div class="row">
+        <button class="btn" id="calc">Calcular firma</button>
+        <button class="btn quiet" id="loadPgs">Cargar otro archivo de puntuación</button>
+        <input type="file" id="pgsFile" accept=".txt,.csv,.tsv" hidden>
+      </div>
+
+      <div id="riskOut"></div>
+    </section>
+
+    <!-- 3 · FEDERADO ------------------------------------------------------>
+    <section class="panel" id="p-fed" aria-labelledby="h-fed">
+      <h2 id="h-fed">Clasificador multigénico entrenado en federado</h2>
+      <p class="lede">Cinco nodos con cohortes distintas entrenan un clasificador de estado de receptor de estrógeno. Cada ronda, un nodo envía sólo su vector de pesos, recortado y con ruido gaussiano. Los ejemplos nunca salen de su institución.</p>
+
+      <div class="card">
+        <div class="row">
+          <label class="field" style="margin:0" for="noise">Ruido (σ multiplicador)</label>
+          <input type="text" id="noise" value="0.35" style="width:80px">
+          <label class="field" style="margin:0" for="rounds">Rondas</label>
+          <input type="text" id="rounds" value="12" style="width:70px">
+          <button class="btn" id="train">Entrenar</button>
+          <button class="btn quiet" id="trainSolo">Entrenar sólo con un nodo</button>
+        </div>
+      </div>
+
+      <div id="fedOut"></div>
+    </section>
+
+    <!-- 4 · CIFRADO HOMOMÓRFICO ------------------------------------------->
+    <section class="panel" id="p-he" aria-labelledby="h-he">
+      <h2 id="h-he">Agregación sobre datos cifrados</h2>
+      <p class="lede">Aquí el agregador suma las aportaciones de los cinco nodos sin poder leer ninguna. Es Paillier real, ejecutándose en tu navegador: la suma se hace multiplicando textos cifrados módulo n².</p>
+
+      <div class="row">
+        <button class="btn" id="genKeys">Generar claves</button>
+        <select id="keySize" style="width:auto">
+          <option value="256">n = 512 bits (demostración)</option>
+          <option value="512">n = 1024 bits (más lento)</option>
+        </select>
+      </div>
+
+      <div id="heOut"></div>
+
+      <div class="note">El tamaño de clave está elegido para que la demostración corra en menos de un segundo. Un despliegue real necesita n ≥ 3072 bits, o un esquema de red como CKKS sobre una biblioteca auditada (Microsoft SEAL, OpenFHE).</div>
+    </section>
+
+    <!-- 5 · SOBERANÍA ------------------------------------------------------>
+    <section class="panel" id="p-gov" aria-labelledby="h-gov">
+      <h2 id="h-gov">Consentimiento y soberanía</h2>
+      <p class="lede">Cada uso de tus datos es una casilla separada que puedes apagar en cualquier momento. Apagar una casilla detiene el uso desde la siguiente ronda de entrenamiento; no hay copia de tu genoma en ningún otro lugar que pueda seguir usándose.</p>
+
+      <div class="card" id="consent"></div>
+
+      <div class="card">
+        <h3>Derecho al olvido</h3>
+        <p>Borrar aquí elimina el genoma de la memoria de esta pestaña y anula la bóveda. Como nunca se transmitió, no queda nada que pedir a un tercero que borre.</p>
+        <div class="row">
+          <button class="btn quiet" id="forget">Borrar todo</button>
+          <button class="btn ghost" id="exportLog">Descargar registro de custodia</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Lo que este prototipo no hace</h3>
+        <p>No diagnostica, no sustituye consejo genético ni una mastografía, y no calcula riesgo absoluto a lo largo de la vida: para eso hace falta un modelo clínico como Tyrer-Cuzick o BOADICEA con historia familiar y factores hormonales.</p>
+        <p>El panel demostrativo tiene 15 variantes descubiertas en cohortes mayoritariamente de ascendencia europea. La calibración en poblaciones latinoamericanas es peor, y esa brecha es precisamente el problema que el diseño federado busca cerrar, no uno que ya haya resuelto.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <aside id="ledger" aria-label="Registro de custodia">
+    <h3>Línea de custodia</h3>
+    <p class="sub">Cada operación, y qué salió del dispositivo.</p>
+    <div class="thread" id="thread"></div>
+  </aside>
+
+</div>
+
+<button class="ledger-btn" id="ledgerBtn" aria-expanded="false">Ver custodia</button>
+
+<footer>
+  <p>HELIX GUARD · prototipo de investigación · Concurso de innovación en IA y ciberseguridad, WomenCISO 4 &amp; MenCISO Gen 1.</p>
+  <p>Datos de demostración sintéticos. Panel de referencia: PGS Catalog <span class="mono">PGS000004</span> (Mavaddat et al., <em>Am J Hum Genet</em> 2019). No es un dispositivo médico.</p>
+</footer>
+
+<script type="module">
+/* @inject:core */
+/* @inject:ui */
+</script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+# HELIX GUARD - genotipos SINTETICOS generados localmente
+# perfil: percentil bajo
+# Estos datos NO provienen de ninguna persona real ni de ninguna cohorte.
+# Formato compatible con datos crudos de consumo: rsid, cromosoma, posicion, genotipo
+rsid	chromosome	position	genotype
+rs2981582	0	0	GG
+rs3803662	0	0	GG
+rs889312	0	0	AA
+rs13281615	0	0	AA
+rs3817198	0	0	TT
+rs13387042	0	0	AG
+rs1045485	0	0	CG
+rs10941679	0	0	AA
+rs4973768	0	0	CC
+rs2046210	0	0	GG
+rs11249433	0	0	AA
+rs614367	0	0	CC
+rs704010	0	0	CC
+rs1011970	0	0	GG
+rs10995190	0	0	GG

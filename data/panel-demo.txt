@@ -1,0 +1,23 @@
+#pgs_name=HELIX_GUARD_PANEL_DEMO_15
+#trait_reported=Cancer de mama (panel demostrativo)
+#genome_build=GRCh37
+#variants_number=15
+#weight_type=beta (logaritmo natural del odds ratio por alelo)
+#AVISO=Panel DEMOSTRATIVO. Los odds ratios son los reportados en las publicaciones de descubrimiento citadas en cada linea, redondeados a dos decimales. NO constituye un puntaje clinico validado. Para uso cientifico cargue el archivo oficial PGS000004 (PRS313, Mavaddat et al., Am J Hum Genet 2019) desde el PGS Catalog.
+#frecuencias=Aproximadas en poblacion de ascendencia europea. Se usan solo para situar el puntaje en una distribucion de referencia, no forman parte del calculo.
+rsID	effect_allele	other_allele	effect_weight	odds_ratio	allele_frequency	gene	source
+rs2981582	A	G	0.231112	1.26	0.38	FGFR2 (10q26)	Easton et al., Nature 2007
+rs3803662	A	G	0.182322	1.2	0.26	TOX3/TNRC9 (16q12)	Easton et al., Nature 2007
+rs889312	C	A	0.122218	1.13	0.28	MAP3K1 (5q11)	Easton et al., Nature 2007
+rs13281615	G	A	0.076961	1.08	0.4	8q24	Easton et al., Nature 2007
+rs3817198	C	T	0.067659	1.07	0.3	LSP1 (11p15)	Easton et al., Nature 2007
+rs13387042	A	G	0.182322	1.2	0.5	2q35	Stacey et al., Nat Genet 2007
+rs1045485	G	C	-0.127833	0.88	0.87	CASP8 D302H (2q33)	Cox et al., Nat Genet 2007
+rs10941679	G	A	0.173953	1.19	0.25	5p12	Stacey et al., Nat Genet 2008
+rs4973768	T	C	0.104360	1.11	0.47	SLC4A7/NEK10 (3p24)	Ahmed et al., Nat Genet 2009
+rs2046210	A	G	0.254642	1.29	0.35	ESR1 (6q25.1)	Zheng et al., Nat Genet 2009
+rs11249433	G	A	0.148420	1.16	0.39	1p11.2	Thomas et al., Nat Genet 2009
+rs614367	T	C	0.139762	1.15	0.15	11q13	Turnbull et al., Nat Genet 2010
+rs704010	T	C	0.067659	1.07	0.38	ZMIZ1 (10q22)	Turnbull et al., Nat Genet 2010
+rs1011970	T	G	0.086178	1.09	0.17	CDKN2A/B (9p21)	Turnbull et al., Nat Genet 2010
+rs10995190	G	A	-0.150823	0.86	0.85	ZNF365 (10q21)	Turnbull et al., Nat Genet 2010

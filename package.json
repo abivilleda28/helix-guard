@@ -1,0 +1,14 @@
+{
+  "name": "helix-guard",
+  "version": "1.0.0",
+  "description": "Firma genética de riesgo de cáncer de mama calculada sin que el genoma salga del dispositivo",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/test.mjs",
+    "build:data": "node scripts/build-data.mjs",
+    "build:app": "node scripts/build-app.mjs",
+    "build": "npm run build:data && npm run build:app && npm test"
+  },
+  "license": "MIT",
+  "engines": { "node": ">=18" }
+}

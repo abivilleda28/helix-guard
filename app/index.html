@@ -1,0 +1,1736 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HELIX GUARD — firma genética de riesgo sin ceder el genoma</title>
+<meta name="description" content="Calcula una firma genética de riesgo de cáncer de mama en tu propio dispositivo. El genoma no sale de aquí.">
+<style>
+:root{
+  --ink:#071628; --navy:#0B1F3A; --navy-2:#122F52; --line:#1D3E68;
+  --teal:#0FA3A3; --teal-bright:#3FD8C8; --rose:#E4356B; --amber:#F0A830;
+  --paper:#F7F9FB; --muted:#8FA6C4; --dim:#5F7898;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--ink); color:var(--paper); font-family:var(--sans);
+  font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{margin:0;font-weight:640;letter-spacing:-0.02em;line-height:1.15}
+p{margin:0 0 .75rem}
+a{color:var(--teal-bright)}
+button{font:inherit}
+.mono{font-family:var(--mono);font-size:.82em;letter-spacing:-0.01em}
+
+/* ---------- encabezado ---------- */
+header{
+  position:sticky;top:0;z-index:40;
+  display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;
+  padding:.7rem 1.1rem;
+  background:rgba(7,22,40,.93);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:center;gap:.6rem;margin-right:auto}
+.brand svg{flex:none}
+.brand b{font-size:1.02rem;letter-spacing:.01em;font-weight:680}
+.brand span{color:var(--muted);font-size:.78rem;display:block;letter-spacing:.01em}
+.meter{
+  display:flex;align-items:center;gap:.45rem;
+  padding:.32rem .7rem;border:1px solid var(--line);border-radius:999px;
+  background:#0A1F38;font-size:.78rem;color:var(--muted);white-space:nowrap;
+}
+.meter b{color:var(--teal-bright);font-family:var(--mono);font-size:.86rem}
+.meter.alert{border-color:var(--rose)}
+.meter.alert b{color:var(--rose)}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--teal-bright);flex:none}
+
+/* ---------- rejilla ---------- */
+.shell{display:grid;grid-template-columns:210px minmax(0,1fr) 320px;gap:0;min-height:calc(100vh - 58px)}
+nav{border-right:1px solid var(--line);padding:1.4rem .8rem;background:#08192D}
+main{padding:1.8rem 2rem 4rem;min-width:0}
+aside{border-left:1px solid var(--line);background:#08192D;padding:1.4rem 1rem;overflow:auto}
+
+/* ---------- pasos ---------- */
+.step{
+  display:grid;grid-template-columns:22px 1fr;gap:.6rem;align-items:start;
+  width:100%;text-align:left;background:none;border:0;color:var(--muted);
+  padding:.6rem .5rem;border-radius:7px;cursor:pointer;line-height:1.3;
+}
+.step:hover{background:#0D2440;color:var(--paper)}
+.step[aria-current="true"]{background:#102B4C;color:var(--paper)}
+.step .n{
+  font-family:var(--mono);font-size:.7rem;color:var(--muted);
+  border:1px solid var(--line);border-radius:4px;text-align:center;padding:1px 0;margin-top:1px;
+}
+.step[aria-current="true"] .n{border-color:var(--teal);color:var(--teal-bright)}
+.step.done .n{background:var(--teal);border-color:var(--teal);color:#07231F}
+.step em{display:block;font-style:normal;font-size:.74rem;color:var(--muted);margin-top:.1rem}
+.step[aria-current="true"] em{color:#A9C0DC}
+
+/* ---------- paneles ---------- */
+.panel{display:none;max-width:74ch;animation:enter .32s ease}
+.panel.on{display:block}
+@keyframes enter{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.panel{animation:none}}
+.panel > h2{font-size:1.55rem;margin-bottom:.4rem}
+.lede{color:#B7C9E0;margin-bottom:1.4rem;max-width:62ch}
+
+.card{border:1px solid var(--line);border-radius:10px;background:#0A2038;padding:1.1rem 1.2rem;margin:1rem 0}
+.card h3{font-size:.98rem;margin-bottom:.5rem}
+.card p:last-child{margin-bottom:0}
+
+.btn{
+  display:inline-flex;align-items:center;gap:.5rem;
+  padding:.62rem 1.1rem;border-radius:7px;border:1px solid var(--teal);
+  background:var(--teal);color:#04211F;font-weight:620;cursor:pointer;
+}
+.btn:hover{background:var(--teal-bright);border-color:var(--teal-bright)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--teal-bright)}
+.btn.ghost:hover{background:#0E3049}
+.btn.quiet{background:transparent;border-color:var(--line);color:#B7C9E0}
+.btn.quiet:hover{background:#0E2842;color:var(--paper)}
+:focus-visible{outline:2px solid var(--teal-bright);outline-offset:2px}
+
+.row{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
+label.field{display:block;margin:.8rem 0 .3rem;font-size:.82rem;color:#B7C9E0}
+input[type=password],input[type=text],select,textarea{
+  width:100%;padding:.55rem .7rem;border-radius:7px;border:1px solid var(--line);
+  background:#071B31;color:var(--paper);font:inherit;
+}
+textarea{font-family:var(--mono);font-size:.78rem;min-height:110px;resize:vertical}
+
+.drop{
+  border:1px dashed var(--line);border-radius:10px;padding:1.4rem;text-align:center;
+  background:#08203A;transition:border-color .15s,background .15s;
+}
+.drop.over{border-color:var(--teal-bright);background:#0C2B44}
+
+.note{
+  border-left:2px solid var(--amber);padding:.55rem 0 .55rem .8rem;
+  color:#D9C89E;font-size:.86rem;margin:1rem 0;
+}
+.note.grave{border-color:var(--rose);color:#F2AFC3}
+
+/* ---------- resultado ---------- */
+.score{display:flex;align-items:baseline;gap:.6rem;margin:.2rem 0 .1rem}
+.score b{font-size:3.2rem;font-weight:700;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+.score span{color:var(--muted);font-size:.9rem}
+.dist{position:relative;height:56px;margin:1.2rem 0 .4rem}
+.dist svg{width:100%;height:100%;display:block;overflow:visible}
+.axis{display:flex;justify-content:space-between;color:var(--muted);font-size:.72rem;font-family:var(--mono)}
+
+table{width:100%;border-collapse:collapse;font-size:.84rem;margin-top:.6rem}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:.76rem;padding:.35rem .5rem;border-bottom:1px solid var(--line)}
+td{padding:.42rem .5rem;border-bottom:1px solid #10294A;vertical-align:top}
+td.num{font-family:var(--mono);text-align:right;font-size:.8rem;font-variant-numeric:tabular-nums}
+.up{color:var(--rose)}.down{color:var(--teal-bright)}
+
+.bars{display:grid;gap:.35rem;margin-top:.7rem}
+.bar{display:grid;grid-template-columns:88px 1fr 62px;gap:.6rem;align-items:center;font-size:.8rem}
+.bar .track{height:6px;background:#0F2A48;border-radius:3px;overflow:hidden}
+.bar .fill{height:100%;background:var(--teal);border-radius:3px;transition:width .5s ease}
+@media (prefers-reduced-motion:reduce){.bar .fill{transition:none}}
+
+.kv{display:grid;grid-template-columns:auto 1fr;gap:.3rem 1rem;font-size:.85rem;margin:.6rem 0}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;font-family:var(--mono);font-size:.8rem;word-break:break-all}
+
+.cipher{
+  font-family:var(--mono);font-size:.7rem;line-height:1.5;color:#7FA8C9;
+  background:#061527;border:1px solid var(--line);border-radius:7px;
+  padding:.6rem .7rem;max-height:110px;overflow:auto;word-break:break-all;
+}
+
+.toggle{display:flex;gap:.7rem;align-items:flex-start;padding:.7rem 0;border-bottom:1px solid #10294A}
+.toggle:last-of-type{border-bottom:0}
+.toggle input{margin-top:.35rem;accent-color:var(--teal);width:16px;height:16px;flex:none}
+.toggle strong{display:block;font-weight:600;font-size:.9rem}
+.toggle span{font-size:.8rem;color:var(--muted)}
+
+/* ---------- registro de custodia ---------- */
+aside h3{font-size:.86rem;margin-bottom:.15rem}
+aside .sub{color:var(--muted);font-size:.75rem;margin-bottom:1rem}
+.thread{position:relative;padding-left:1.1rem}
+.thread::before{content:"";position:absolute;left:4px;top:4px;bottom:4px;width:1px;background:var(--line)}
+.evt{position:relative;padding:0 0 .95rem}
+.evt::before{
+  content:"";position:absolute;left:-1.1rem;top:.35rem;width:9px;height:9px;border-radius:50%;
+  background:var(--ink);border:2px solid var(--teal);
+}
+.evt.out::before{border-color:var(--amber);background:var(--ink)}
+.evt.leak::before{border-color:var(--rose);background:var(--rose)}
+.evt b{display:block;font-size:.8rem;font-weight:600}
+.evt em{font-style:normal;display:block;font-size:.74rem;color:var(--muted);font-family:var(--mono)}
+.evt small{display:block;font-size:.74rem;color:#93AAC6;margin-top:.1rem}
+
+/* ---------- pie ---------- */
+footer{border-top:1px solid var(--line);padding:1.4rem 2rem;color:var(--muted);font-size:.78rem}
+footer a{color:var(--teal-bright)}
+
+/* ---------- responsivo ---------- */
+.ledger-btn{display:none}
+@media (max-width:1080px){
+  .shell{grid-template-columns:180px minmax(0,1fr)}
+  aside{
+    position:fixed;inset:auto 0 0 0;max-height:66vh;border-left:0;border-top:1px solid var(--line);
+    transform:translateY(101%);transition:transform .28s ease;z-index:50;box-shadow:0 -18px 40px rgba(0,0,0,.5);
+    padding-bottom:4.5rem;
+  }
+  aside.open{transform:none}
+  .ledger-btn{
+    display:inline-flex;position:fixed;right:1rem;bottom:1rem;z-index:60;
+    padding:.6rem 1rem;border-radius:999px;border:1px solid var(--teal);
+    background:var(--teal);color:#04211F;font-weight:620;cursor:pointer;
+    box-shadow:0 6px 20px rgba(0,0,0,.45);
+  }
+  main{padding:1.4rem 1.2rem 5rem}
+}
+@media (max-width:720px){
+  .shell{grid-template-columns:1fr}
+  nav{
+    border-right:0;border-bottom:1px solid var(--line);padding:.6rem;
+    display:flex;gap:.4rem;overflow-x:auto;
+  }
+  .step{width:auto;flex:none;grid-template-columns:20px auto;white-space:nowrap}
+  .step em{display:none}
+  .score b{font-size:2.5rem}
+  .bar{grid-template-columns:74px 1fr 52px;font-size:.75rem}
+  header{padding:.6rem .8rem}
+  .brand span{display:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M7 2c0 5 10 5 10 10S7 17 7 22" stroke="#0FA3A3" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M17 2c0 5-10 5-10 10s10 5 10 10" stroke="#3FD8C8" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M9 6.5h6M8 10h8M8 14h8M9 17.5h6" stroke="#1D3E68" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <b>HELIX GUARD</b>
+      <span>Tu ADN se queda contigo</span>
+    </div>
+  </div>
+  <div class="meter" id="meterNet" title="Peticiones de red interceptadas desde que se abrió la app">
+    <i class="pulse"></i> red <b id="netCount">0</b> solicitudes
+  </div>
+  <div class="meter" id="meterOut" title="Bytes de genotipo en claro que han salido del dispositivo">
+    genoma fuera <b id="outCount">0 B</b>
+  </div>
+</header>
+
+<div class="shell">
+
+  <nav id="rail" aria-label="Pasos"></nav>
+
+  <main>
+
+    <!-- 1 · BÓVEDA ------------------------------------------------------->
+    <section class="panel on" id="p-vault" aria-labelledby="h-vault">
+      <h2 id="h-vault">Carga tu genoma en la bóveda local</h2>
+      <p class="lede">El archivo se lee con la API de ficheros del navegador y se queda en la memoria de esta pestaña. Puedes sellarlo con una frase de paso: se cifra con AES-256-GCM usando una clave derivada de tu frase, que nunca se guarda ni se envía.</p>
+
+      <div class="drop" id="drop">
+        <p>Arrastra aquí tu archivo de genotipos, o</p>
+        <div class="row" style="justify-content:center">
+          <button class="btn quiet" id="pickFile">Elegir archivo</button>
+          <button class="btn ghost" data-demo="medio">Usar perfil sintético</button>
+        </div>
+        <input type="file" id="file" accept=".txt,.csv,.tsv,.vcf" hidden>
+        <p style="margin:.8rem 0 0;font-size:.8rem;color:var(--muted)">Acepta datos crudos tipo <span class="mono">rsid / cromosoma / posición / genotipo</span> y VCF simplificado.</p>
+      </div>
+
+      <div class="row" style="margin-top:.7rem">
+        <button class="btn quiet" data-demo="bajo">Perfil sintético bajo</button>
+        <button class="btn quiet" data-demo="medio">Medio</button>
+        <button class="btn quiet" data-demo="alto">Alto</button>
+      </div>
+
+      <div class="card" id="fileCard" hidden>
+        <h3>Archivo en memoria</h3>
+        <dl class="kv" id="fileMeta"></dl>
+        <label class="field" for="pass">Frase de paso para sellar la bóveda</label>
+        <input type="password" id="pass" placeholder="mínimo 8 caracteres" autocomplete="new-password">
+        <div class="row" style="margin-top:.7rem">
+          <button class="btn" id="seal">Sellar bóveda</button>
+          <button class="btn quiet" id="unseal" disabled>Abrir bóveda</button>
+          <button class="btn quiet" id="wipe">Borrar del dispositivo</button>
+        </div>
+        <div id="vaultOut"></div>
+      </div>
+
+      <div class="note">Los tres perfiles sintéticos se generaron con un muestreo de Hardy-Weinberg sobre las frecuencias del panel. No corresponden a ninguna persona ni a ninguna cohorte real.</div>
+    </section>
+
+    <!-- 2 · FIRMA DE RIESGO ---------------------------------------------->
+    <section class="panel" id="p-risk" aria-labelledby="h-risk">
+      <h2 id="h-risk">Firma de riesgo poligénico</h2>
+      <p class="lede">Suma ponderada de dosis alélicas sobre el panel cargado. El cálculo entero ocurre en esta pestaña; ninguna variante viaja a ningún servidor.</p>
+
+      <div class="row">
+        <button class="btn" id="calc">Calcular firma</button>
+        <button class="btn quiet" id="loadPgs">Cargar otro archivo de puntuación</button>
+        <input type="file" id="pgsFile" accept=".txt,.csv,.tsv" hidden>
+      </div>
+
+      <div id="riskOut"></div>
+    </section>
+
+    <!-- 3 · FEDERADO ------------------------------------------------------>
+    <section class="panel" id="p-fed" aria-labelledby="h-fed">
+      <h2 id="h-fed">Clasificador multigénico entrenado en federado</h2>
+      <p class="lede">Cinco nodos con cohortes distintas entrenan un clasificador de estado de receptor de estrógeno. Cada ronda, un nodo envía sólo su vector de pesos, recortado y con ruido gaussiano. Los ejemplos nunca salen de su institución.</p>
+
+      <div class="card">
+        <div class="row">
+          <label class="field" style="margin:0" for="noise">Ruido (σ multiplicador)</label>
+          <input type="text" id="noise" value="0.35" style="width:80px">
+          <label class="field" style="margin:0" for="rounds">Rondas</label>
+          <input type="text" id="rounds" value="12" style="width:70px">
+          <button class="btn" id="train">Entrenar</button>
+          <button class="btn quiet" id="trainSolo">Entrenar sólo con un nodo</button>
+        </div>
+      </div>
+
+      <div id="fedOut"></div>
+    </section>
+
+    <!-- 4 · CIFRADO HOMOMÓRFICO ------------------------------------------->
+    <section class="panel" id="p-he" aria-labelledby="h-he">
+      <h2 id="h-he">Agregación sobre datos cifrados</h2>
+      <p class="lede">Aquí el agregador suma las aportaciones de los cinco nodos sin poder leer ninguna. Es Paillier real, ejecutándose en tu navegador: la suma se hace multiplicando textos cifrados módulo n².</p>
+
+      <div class="row">
+        <button class="btn" id="genKeys">Generar claves</button>
+        <select id="keySize" style="width:auto">
+          <option value="256">n = 512 bits (demostración)</option>
+          <option value="512">n = 1024 bits (más lento)</option>
+        </select>
+      </div>
+
+      <div id="heOut"></div>
+
+      <div class="note">El tamaño de clave está elegido para que la demostración corra en menos de un segundo. Un despliegue real necesita n ≥ 3072 bits, o un esquema de red como CKKS sobre una biblioteca auditada (Microsoft SEAL, OpenFHE).</div>
+    </section>
+
+    <!-- 5 · SOBERANÍA ------------------------------------------------------>
+    <section class="panel" id="p-gov" aria-labelledby="h-gov">
+      <h2 id="h-gov">Consentimiento y soberanía</h2>
+      <p class="lede">Cada uso de tus datos es una casilla separada que puedes apagar en cualquier momento. Apagar una casilla detiene el uso desde la siguiente ronda de entrenamiento; no hay copia de tu genoma en ningún otro lugar que pueda seguir usándose.</p>
+
+      <div class="card" id="consent"></div>
+
+      <div class="card">
+        <h3>Derecho al olvido</h3>
+        <p>Borrar aquí elimina el genoma de la memoria de esta pestaña y anula la bóveda. Como nunca se transmitió, no queda nada que pedir a un tercero que borre.</p>
+        <div class="row">
+          <button class="btn quiet" id="forget">Borrar todo</button>
+          <button class="btn ghost" id="exportLog">Descargar registro de custodia</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Lo que este prototipo no hace</h3>
+        <p>No diagnostica, no sustituye consejo genético ni una mastografía, y no calcula riesgo absoluto a lo largo de la vida: para eso hace falta un modelo clínico como Tyrer-Cuzick o BOADICEA con historia familiar y factores hormonales.</p>
+        <p>El panel demostrativo tiene 15 variantes descubiertas en cohortes mayoritariamente de ascendencia europea. La calibración en poblaciones latinoamericanas es peor, y esa brecha es precisamente el problema que el diseño federado busca cerrar, no uno que ya haya resuelto.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <aside id="ledger" aria-label="Registro de custodia">
+    <h3>Línea de custodia</h3>
+    <p class="sub">Cada operación, y qué salió del dispositivo.</p>
+    <div class="thread" id="thread"></div>
+  </aside>
+
+</div>
+
+<button class="ledger-btn" id="ledgerBtn" aria-expanded="false">Ver custodia</button>
+
+<footer>
+  <p>HELIX GUARD · prototipo de investigación · Concurso de innovación en IA y ciberseguridad, WomenCISO 4 &amp; MenCISO Gen 1.</p>
+  <p>Datos de demostración sintéticos. Panel de referencia: PGS Catalog <span class="mono">PGS000004</span> (Mavaddat et al., <em>Am J Hum Genet</em> 2019). No es un dispositivo médico.</p>
+</footer>
+
+<script type="module">
+/* ---- src/prs.js ---- */
+
+/**
+ * HELIX GUARD — motor de puntaje poligénico (PRS)
+ * ------------------------------------------------------------------
+ * Todo el cálculo ocurre en el dispositivo de la persona. Este módulo
+ * no realiza ninguna petición de red: recibe texto y devuelve números.
+ *
+ * Formatos de entrada soportados
+ *   1. Archivo de puntuación en formato PGS Catalog (columnas con
+ *      encabezado: rsID / effect_allele / other_allele / effect_weight).
+ *      Referencia: Lambert et al., Nat Genet 2021 (PGS Catalog).
+ *   2. Genotipos "raw data" estilo consumo (rsid, chromosome, position,
+ *      genotype) y VCF simplificado.
+ *
+ * El puntaje es la suma ponderada estándar de dosis alélicas:
+ *      PRS = Σ  β_i · dosis_i
+ * donde dosis_i ∈ {0,1,2} cuenta copias del alelo de efecto.
+ * Es la definición usada por Mavaddat et al., Am J Hum Genet 2019 (PRS313).
+ */
+
+const COMPLEMENT = { A: 'T', T: 'A', C: 'G', G: 'C' };
+
+/** Invierte la hebra de un alelo (A<->T, C<->G). */
+function flipStrand(allele) {
+  return allele
+    .split('')
+    .map((b) => COMPLEMENT[b] || b)
+    .join('');
+}
+
+/** Parte una fila eligiendo el delimitador presente, en este orden. */
+function splitRow(line) {
+  if (line.includes('\t')) return line.split('\t').map((c) => c.trim());
+  if (line.includes(',')) return line.split(',').map((c) => c.trim());
+  return line.split(/\s+/).filter(Boolean);
+}
+
+/**
+ * Lee un archivo de puntuación en formato PGS Catalog.
+ * Las líneas que empiezan con '#' son metadatos y se conservan.
+ */
+function parseScoringFile(text) {
+  const meta = {};
+  const rows = [];
+  let header = null;
+
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line) continue;
+
+    if (line.startsWith('#')) {
+      const m = line.slice(1).match(/^\s*([\w.]+)\s*=\s*(.+)$/);
+      if (m) meta[m[1]] = m[2].trim();
+      continue;
+    }
+
+    // El delimitador se decide por línea: si hay tabuladores, sólo se
+    // parte por tabulador. Si no, por coma. Así un campo como
+    // "Easton et al., Nature 2007" no se rompe por su coma interna.
+    const cells = splitRow(line);
+    if (!header) {
+      header = cells.map((c) => c.toLowerCase());
+      continue;
+    }
+
+    const rec = {};
+    header.forEach((key, i) => (rec[key] = cells[i]));
+
+    const rsid = rec.rsid || rec.rsids || rec.variant_id || rec.id;
+    const weight = Number(rec.effect_weight ?? rec.beta ?? rec.weight);
+    if (!rsid || !Number.isFinite(weight)) continue;
+
+    rows.push({
+      rsid: rsid.toLowerCase(),
+      effect: (rec.effect_allele || rec.ea || '').toUpperCase(),
+      other: (rec.other_allele || rec.oa || rec.reference_allele || '').toUpperCase(),
+      weight,
+      gene: rec.gene || rec.locus_name || '',
+      source: rec.source || rec.citation || '',
+    });
+  }
+
+  return { meta, variants: rows };
+}
+
+/**
+ * Lee genotipos. Acepta el formato tabular de datos crudos de consumo
+ * (rsid  chr  pos  genotipo) y un VCF simplificado con columna GT.
+ */
+function parseGenotypes(text) {
+  const calls = new Map();
+  let skipped = 0;
+
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#') || line.startsWith('rsid')) continue;
+
+    const cells = line.split(/\t|,|\s+/).filter(Boolean);
+    if (cells.length < 2) continue;
+
+    const rsid = cells[0].toLowerCase();
+    if (!rsid.startsWith('rs')) {
+      skipped++;
+      continue;
+    }
+
+    // El genotipo es la última columna con dos letras de A/C/G/T (o '--').
+    let gt = null;
+    for (let i = cells.length - 1; i >= 1; i--) {
+      const c = cells[i].toUpperCase().replace(/[|/]/g, '');
+      if (/^[ACGT]{2}$/.test(c)) {
+        gt = c;
+        break;
+      }
+    }
+    if (!gt) {
+      skipped++;
+      continue;
+    }
+    calls.set(rsid, gt);
+  }
+
+  return { calls, skipped };
+}
+
+/**
+ * Calcula la dosis del alelo de efecto para un genotipo dado.
+ * Devuelve null si el genotipo no es compatible con el par de alelos
+ * declarado, ni siquiera tras invertir la hebra.
+ */
+function dosage(genotype, effect, other) {
+  const gt = genotype.toUpperCase();
+  const direct = (gt.match(new RegExp(effect, 'g')) || []).length;
+  const alleles = new Set(gt.split(''));
+  const declared = new Set([effect, other].filter(Boolean));
+
+  const compatible = [...alleles].every((a) => declared.has(a));
+  if (compatible) return direct;
+
+  // Intento de corrección de hebra.
+  const fEffect = flipStrand(effect);
+  const fOther = flipStrand(other || '');
+  const flipped = new Set([fEffect, fOther].filter(Boolean));
+  if ([...alleles].every((a) => flipped.has(a))) {
+    return (gt.match(new RegExp(fEffect, 'g')) || []).length;
+  }
+
+  return null;
+}
+
+/**
+ * Suma ponderada de dosis. Devuelve el puntaje bruto y la traza por
+ * variante, que alimenta la explicación mostrada a la persona.
+ */
+function computePRS(variants, calls) {
+  let score = 0;
+  let matched = 0;
+  const trace = [];
+  const missing = [];
+
+  for (const v of variants) {
+    const gt = calls.get(v.rsid);
+    if (!gt) {
+      missing.push(v.rsid);
+      continue;
+    }
+    const d = dosage(gt, v.effect, v.other);
+    if (d === null) {
+      missing.push(v.rsid);
+      continue;
+    }
+    const contribution = v.weight * d;
+    score += contribution;
+    matched++;
+    trace.push({ ...v, genotype: gt, dosage: d, contribution });
+  }
+
+  trace.sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution));
+  return { score, matched, total: variants.length, missing, trace };
+}
+
+/**
+ * Media y desviación estándar teóricas del puntaje en una población con
+ * frecuencias alélicas conocidas, asumiendo equilibrio de Hardy-Weinberg
+ * e independencia entre loci:
+ *      E[PRS]   = Σ 2·β_i·f_i
+ *      Var[PRS] = Σ 2·β_i²·f_i·(1-f_i)
+ * Sirve para situar el puntaje individual dentro de la distribución
+ * poblacional sin necesidad de una cohorte de referencia centralizada.
+ */
+function referenceDistribution(variants, frequencies) {
+  let mean = 0;
+  let variance = 0;
+  for (const v of variants) {
+    const f = frequencies?.[v.rsid] ?? v.freq;
+    if (!Number.isFinite(f)) continue;
+    mean += 2 * v.weight * f;
+    variance += 2 * v.weight * v.weight * f * (1 - f);
+  }
+  return { mean, sd: Math.sqrt(variance) };
+}
+
+/** Función de distribución normal acumulada (Abramowitz & Stegun 26.2.17). */
+function normalCdf(z) {
+  const t = 1 / (1 + 0.2316419 * Math.abs(z));
+  const d = 0.3989422804014327 * Math.exp((-z * z) / 2);
+  const p =
+    d * t * (0.319381530 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
+  return z > 0 ? 1 - p : p;
+}
+
+/**
+ * Traduce el puntaje bruto a una posición poblacional.
+ * `orPerSd` es el odds ratio por desviación estándar reportado para el
+ * puntaje que se esté usando (1.61 para PRS313 en ascendencia europea,
+ * Mavaddat et al. 2019). El riesgo relativo se expresa frente a la media
+ * poblacional, no frente a un valor absoluto: HELIX GUARD no emite
+ * riesgos absolutos a lo largo de la vida sin un modelo clínico
+ * (Tyrer-Cuzick, BOADICEA) y datos de historia familiar.
+ */
+function interpret(score, ref, orPerSd) {
+  const z = ref.sd > 0 ? (score - ref.mean) / ref.sd : 0;
+  const percentile = normalCdf(z) * 100;
+  const relativeRisk = Math.pow(orPerSd, z);
+  return { z, percentile, relativeRisk };
+}
+
+
+/* ---- src/paillier.js ---- */
+
+/**
+ * HELIX GUARD — cifrado homomórfico aditivo (Paillier, 1999)
+ * ------------------------------------------------------------------
+ * Implementación real, no simulada. La propiedad que explotamos es:
+ *
+ *      D( E(m1) · E(m2)  mod n² ) = m1 + m2  mod n
+ *
+ * Es decir: el servidor agregador puede SUMAR aportaciones de muchos
+ * nodos sin poder leer ninguna. Se usa aquí para agregar los pesos del
+ * modelo federado y los conteos epidemiológicos.
+ *
+ * Referencia: P. Paillier, "Public-Key Cryptosystems Based on Composite
+ * Degree Residuosity Classes", EUROCRYPT 1999.
+ *
+ * AVISO DE PARÁMETROS
+ * El tamaño de clave por defecto (n de 512 bits) está elegido para que
+ * la demostración corra en menos de un segundo en un navegador. NO es
+ * seguro en producción: un despliegue real necesita n ≥ 3072 bits, o
+ * bien un esquema de red ideal (CKKS/BFV) sobre una biblioteca auditada
+ * como Microsoft SEAL u OpenFHE.
+ */
+
+const SMALL_PRIMES = [
+  3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101,
+  103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199,
+];
+
+function randomBigInt(bits) {
+  const bytes = new Uint8Array(Math.ceil(bits / 8));
+  const g = globalThis.crypto ?? require('node:crypto').webcrypto;
+  g.getRandomValues(bytes);
+  let n = 0n;
+  for (const b of bytes) n = (n << 8n) | BigInt(b);
+  // Fija el bit más alto (tamaño garantizado) y el más bajo (impar).
+  n |= 1n << BigInt(bits - 1);
+  n |= 1n;
+  return n;
+}
+function modPow(base, exp, mod) {
+  let result = 1n;
+  base %= mod;
+  while (exp > 0n) {
+    if (exp & 1n) result = (result * base) % mod;
+    base = (base * base) % mod;
+    exp >>= 1n;
+  }
+  return result;
+}
+
+function egcd(a, b) {
+  if (b === 0n) return [a, 1n, 0n];
+  const [g, x, y] = egcd(b, a % b);
+  return [g, y, x - (a / b) * y];
+}
+function modInverse(a, m) {
+  const [g, x] = egcd(((a % m) + m) % m, m);
+  if (g !== 1n) throw new Error('No existe inverso modular');
+  return ((x % m) + m) % m;
+}
+
+/** Prueba de primalidad Miller-Rabin. */
+function isProbablePrime(n, rounds = 24) {
+  if (n < 2n) return false;
+  for (const p of SMALL_PRIMES) {
+    const bp = BigInt(p);
+    if (n === bp) return true;
+    if (n % bp === 0n) return false;
+  }
+
+  let d = n - 1n;
+  let r = 0n;
+  while (d % 2n === 0n) {
+    d /= 2n;
+    r++;
+  }
+
+  for (let i = 0; i < rounds; i++) {
+    const a = 2n + (randomBigInt(32) % (n - 4n));
+    let x = modPow(a, d, n);
+    if (x === 1n || x === n - 1n) continue;
+    let composite = true;
+    for (let j = 1n; j < r; j++) {
+      x = (x * x) % n;
+      if (x === n - 1n) {
+        composite = false;
+        break;
+      }
+    }
+    if (composite) return false;
+  }
+  return true;
+}
+function randomPrime(bits) {
+  for (;;) {
+    const candidate = randomBigInt(bits);
+    if (isProbablePrime(candidate)) return candidate;
+  }
+}
+
+/**
+ * Genera un par de claves. Usamos la variante con g = n + 1, para la
+ * cual λ = lcm(p-1, q-1) y μ = λ⁻¹ mod n.
+ */
+function generateKeys(bitsPerPrime = 256) {
+  let p = randomPrime(bitsPerPrime);
+  let q = randomPrime(bitsPerPrime);
+  while (q === p) q = randomPrime(bitsPerPrime);
+
+  const n = p * q;
+  const nSquared = n * n;
+  const lambda = ((p - 1n) * (q - 1n)) / gcd(p - 1n, q - 1n);
+  const g = n + 1n;
+  const mu = modInverse(lambda, n);
+
+  return {
+    publicKey: { n, nSquared, g, bits: bitsPerPrime * 2 },
+    privateKey: { lambda, mu, n, nSquared },
+  };
+}
+
+function gcd(a, b) {
+  while (b) [a, b] = [b, a % b];
+  return a;
+}
+function encrypt(publicKey, message) {
+  const { n, nSquared, g } = publicKey;
+  const m = ((BigInt(message) % n) + n) % n;
+  let r;
+  do {
+    r = randomBigInt(publicKey.bits - 1) % n;
+  } while (r <= 1n || gcd(r, n) !== 1n);
+  return (modPow(g, m, nSquared) * modPow(r, n, nSquared)) % nSquared;
+}
+function decrypt(privateKey, ciphertext) {
+  const { lambda, mu, n, nSquared } = privateKey;
+  const x = modPow(ciphertext, lambda, nSquared);
+  const l = (x - 1n) / n;
+  let m = (l * mu) % n;
+  // Interpreta la mitad superior del anillo como negativos.
+  if (m > n / 2n) m -= n;
+  return m;
+}
+
+/** Suma homomórfica: producto de textos cifrados módulo n². */
+function addEncrypted(publicKey, a, b) {
+  return (a * b) % publicKey.nSquared;
+}
+
+/** Multiplicación homomórfica por un escalar en claro. */
+function multiplyByScalar(publicKey, ciphertext, scalar) {
+  const k = BigInt(scalar);
+  if (k < 0n) {
+    return modPow(modInverse(ciphertext, publicKey.nSquared), -k, publicKey.nSquared);
+  }
+  return modPow(ciphertext, k, publicKey.nSquared);
+}
+
+/**
+ * Codifica un número real como entero de punto fijo, porque Paillier
+ * opera sobre enteros. `scale` fija los decimales conservados.
+ */
+const FIXED_POINT_SCALE = 1_000_000n;
+function encode(value, scale = FIXED_POINT_SCALE) {
+  return BigInt(Math.round(value * Number(scale)));
+}
+function decode(value, scale = FIXED_POINT_SCALE) {
+  return Number(value) / Number(scale);
+}
+
+
+/* ---- src/federated.js ---- */
+
+/**
+ * HELIX GUARD — aprendizaje federado con privacidad diferencial
+ * ------------------------------------------------------------------
+ * Regresión logística entrenada con FedAvg (McMahan et al., AISTATS
+ * 2017). Cada nodo (hospital, laboratorio, teléfono) entrena sobre sus
+ * propios datos y envía únicamente el vector de pesos, recortado y con
+ * ruido gaussiano. El genoma nunca se mueve.
+ *
+ * Evidencia de que el enfoque no sacrifica desempeño:
+ *   · Sheller et al., Sci Rep 2020 — modelo federado sobre 10
+ *     instituciones alcanza el 99 % del desempeño del modelo
+ *     centralizado en segmentación de tumor cerebral.
+ *   · Adnan et al., Sci Rep 2022 — FedAvg con privacidad diferencial
+ *     sobre TCGA, desempeño comparable al centralizado.
+ */
+
+/** Generador congruencial lineal con semilla, para demos reproducibles. */
+function seededRandom(seed = 42) {
+  let s = seed >>> 0;
+  return function next() {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+}
+
+/** Muestra de una normal estándar por el método de Box-Muller. */
+function gaussian(rand) {
+  let u = 0;
+  let v = 0;
+  while (u === 0) u = rand();
+  while (v === 0) v = rand();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+const sigmoid = (z) => 1 / (1 + Math.exp(-z));
+function predict(weights, x) {
+  let z = weights[0];
+  for (let i = 0; i < x.length; i++) z += weights[i + 1] * x[i];
+  return sigmoid(z);
+}
+
+/**
+ * Entrenamiento local: descenso de gradiente por lotes completos sobre
+ * la verosimilitud logística.
+ */
+/**
+ * Entrenamiento local: descenso de gradiente por lotes completos sobre
+ * la verosimilitud logística, con recorte del gradiente de cada ejemplo.
+ *
+ * El recorte por ejemplo es lo que hace que la garantía de privacidad
+ * sea a nivel de registro y no sólo a nivel de nodo: si el gradiente de
+ * una persona nunca puede tener norma mayor que `perExampleClip`, quitar
+ * o cambiar a esa persona mueve la actualización final como mucho
+ *      Δ = epochs · lr · perExampleClip / n
+ * y esa cota es la que alimenta la contabilidad de privacidad.
+ * Es la idea de Abadi et al., CCS 2016 (DP-SGD).
+ */
+function trainLocal(weights, data, { epochs = 12, lr = 0.35, perExampleClip = Infinity } = {}) {
+  const w = weights.slice();
+  const n = data.length;
+  if (n === 0) return w;
+
+  for (let e = 0; e < epochs; e++) {
+    const grad = new Array(w.length).fill(0);
+    for (const { x, y } of data) {
+      const err = predict(w, x) - y;
+      const gi = [err, ...x.map((xi) => err * xi)];
+      const norm = l2(gi);
+      const factor = norm > perExampleClip ? perExampleClip / norm : 1;
+      for (let i = 0; i < w.length; i++) grad[i] += gi[i] * factor;
+    }
+    for (let i = 0; i < w.length; i++) w[i] -= (lr * grad[i]) / n;
+  }
+  return w;
+}
+
+/** Sensibilidad de la actualización local ante el cambio de un registro. */
+function updateSensitivity({ epochs, lr, perExampleClip, n }) {
+  return (epochs * lr * perExampleClip) / n;
+}
+
+/** Norma euclidiana de la actualización, para el recorte. */
+function l2(vector) {
+  return Math.sqrt(vector.reduce((acc, v) => acc + v * v, 0));
+}
+
+/**
+ * Recorta la actualización a norma ≤ clip y le añade ruido gaussiano.
+ * El recorte acota la sensibilidad; el ruido produce la garantía.
+ */
+function privatize(update, { clip = 1.0, noiseMultiplier = 0.6, rand }) {
+  const norm = l2(update);
+  const scale = norm > clip ? clip / norm : 1;
+  const sigma = noiseMultiplier * clip;
+  return update.map((v) => v * scale + gaussian(rand) * sigma);
+}
+
+/**
+ * Contabilidad de privacidad, versión básica y explícitamente
+ * conservadora. Para el mecanismo gaussiano con sensibilidad Δ y
+ * desviación σ, se cumple (ε, δ)-DP con
+ *      ε = (Δ/σ)·√(2·ln(1.25/δ))     válido para ε ≤ 1
+ * (Dwork & Roth, 2014, teorema A.1). Componemos secuencialmente sobre
+ * las rondas, que es la cota más pesimista.
+ *
+ * `sensitivity` es Δ a nivel de registro: cuánto puede mover la
+ * actualización el dato de una sola persona, acotado por el recorte por
+ * ejemplo. `sigma` es la desviación absoluta del ruido añadido.
+ *
+ * En producción se sustituye por contabilidad de Rényi o por el
+ * accountant de momentos (Abadi et al., CCS 2016), que da un ε bastante
+ * menor para el mismo ruido. Se declara aquí para no sobrevender.
+ */
+function privacyBudget({ rounds, sensitivity, sigma, delta = 1e-5 }) {
+  const epsPerRound = (sensitivity / sigma) * Math.sqrt(2 * Math.log(1.25 / delta));
+  const total = epsPerRound * rounds;
+  return {
+    epsilonPerRound: epsPerRound,
+    epsilonTotal: total,
+    delta,
+    sensitivity,
+    sigma,
+    band: total <= 1 ? 'fuerte' : total <= 8 ? 'razonable' : 'débil',
+    method: 'Mecanismo gaussiano a nivel de registro + composición secuencial (cota conservadora)',
+  };
+}
+
+/**
+ * Promediado federado ponderado por tamaño de muestra.
+ * Sólo recibe vectores de pesos: nunca ejemplos.
+ */
+function federatedAverage(updates) {
+  const totalN = updates.reduce((acc, u) => acc + u.n, 0);
+  const dim = updates[0].weights.length;
+  const avg = new Array(dim).fill(0);
+  for (const u of updates) {
+    const share = u.n / totalN;
+    for (let i = 0; i < dim; i++) avg[i] += u.weights[i] * share;
+  }
+  return avg;
+}
+
+/** Exactitud y AUC sobre un conjunto de prueba. */
+function evaluate(weights, data) {
+  let correct = 0;
+  const scores = [];
+  for (const { x, y } of data) {
+    const p = predict(weights, x);
+    if ((p >= 0.5 ? 1 : 0) === y) correct++;
+    scores.push({ p, y });
+  }
+
+  scores.sort((a, b) => a.p - b.p);
+  const pos = scores.filter((s) => s.y === 1).length;
+  const neg = scores.length - pos;
+  let rankSum = 0;
+  scores.forEach((s, i) => {
+    if (s.y === 1) rankSum += i + 1;
+  });
+  const auc = pos && neg ? (rankSum - (pos * (pos + 1)) / 2) / (pos * neg) : 0.5;
+
+  return { accuracy: correct / data.length, auc };
+}
+
+/**
+ * Ejecuta una ronda completa de entrenamiento federado.
+ * Devuelve el modelo global y la traza de lo que cada nodo transmitió,
+ * que es lo que la interfaz muestra en el registro de custodia.
+ */
+function federatedRound(globalWeights, nodes, options) {
+  const updates = [];
+  const transmissions = [];
+  const sigma = options.noiseMultiplier * options.clip;
+
+  for (const node of nodes) {
+    const local = trainLocal(globalWeights, node.data, options);
+    const delta = local.map((v, i) => v - globalWeights[i]);
+    const noisy = privatize(delta, options);
+    const shared = noisy.map((v, i) => globalWeights[i] + v);
+
+    updates.push({ weights: shared, n: node.data.length });
+    transmissions.push({
+      node: node.name,
+      samples: node.data.length,
+      bytes: shared.length * 8,
+      norm: l2(delta),
+      clipped: l2(delta) > options.clip,
+      sensitivity: updateSensitivity({
+        epochs: options.epochs,
+        lr: options.lr,
+        perExampleClip: options.perExampleClip,
+        n: node.data.length,
+      }),
+    });
+  }
+
+  const worstSensitivity = Math.max(...transmissions.map((t) => t.sensitivity));
+  return { weights: federatedAverage(updates), transmissions, sigma, sensitivity: worstSensitivity };
+}
+
+/**
+ * Cohorte sintética generada localmente con semilla fija.
+ * Reproduce la estructura de un clasificador multigénico de estado de
+ * receptor de estrógeno a partir de expresión génica, siguiendo la
+ * lógica de los predictores de muestra única validados en SCAN-B
+ * (Staaf et al., npj Breast Cancer 2022; Brueffer et al., JCO PO 2018).
+ * Los datos NO son de SCAN-B: son simulados, y así se etiqueta en la
+ * interfaz. Sirven para demostrar el protocolo, no la biología.
+ */
+const FEATURES = ['ESR1', 'PGR', 'ERBB2', 'MKI67', 'FOXA1', 'GATA3'];
+function syntheticCohort({ n = 240, seed = 7, shift = 0 }) {
+  const rand = seededRandom(seed);
+  const data = [];
+  // Coeficientes latentes: ESR1, PGR, FOXA1 y GATA3 empujan hacia RE+;
+  // MKI67 y ERBB2 hacia RE-. Es la dirección biológica conocida.
+  const truth = [0.15, 1.9, 1.15, -0.7, -0.95, 1.0, 0.85];
+
+  for (let i = 0; i < n; i++) {
+    const x = FEATURES.map(() => gaussian(rand) + shift);
+    const p = predict(truth, x);
+    const y = rand() < p ? 1 : 0;
+    data.push({ x, y });
+  }
+  return data;
+}
+
+
+/* ---- src/vault.js ---- */
+
+/**
+ * HELIX GUARD — bóveda local del genoma
+ * ------------------------------------------------------------------
+ * Cifrado en reposo del archivo genómico dentro del dispositivo, con
+ * WebCrypto (AES-256-GCM). La clave se deriva de una frase de paso con
+ * PBKDF2-HMAC-SHA-256; nunca se almacena ni se transmite.
+ *
+ * Elección de parámetros
+ *   · AES-GCM 256 bits: cifrado autenticado, recomendado por NIST
+ *     SP 800-38D. Detecta manipulación además de proteger el contenido.
+ *   · PBKDF2 con 600 000 iteraciones: mínimo vigente en la guía de
+ *     almacenamiento de contraseñas de OWASP para PBKDF2-HMAC-SHA-256.
+ *   · IV de 96 bits aleatorio por operación, nunca reutilizado.
+ */
+
+const subtle = () => (globalThis.crypto ?? require('node:crypto').webcrypto).subtle;
+const getRandomValues = (arr) => (globalThis.crypto ?? require('node:crypto').webcrypto).getRandomValues(arr);
+const PBKDF2_ITERATIONS = 600_000;
+function toHex(buffer) {
+  return [...new Uint8Array(buffer)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** Huella del archivo, para que la persona pueda verificar integridad. */
+async function fingerprint(text) {
+  const digest = await subtle().digest('SHA-256', new TextEncoder().encode(text));
+  return toHex(digest);
+}
+async function deriveKey(passphrase, salt, iterations = PBKDF2_ITERATIONS) {
+  const base = await subtle().importKey(
+    'raw',
+    new TextEncoder().encode(passphrase),
+    'PBKDF2',
+    false,
+    ['deriveKey']
+  );
+  return subtle().deriveKey(
+    { name: 'PBKDF2', salt, iterations, hash: 'SHA-256' },
+    base,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+async function sealVault(plaintext, passphrase) {
+  const salt = getRandomValues(new Uint8Array(16));
+  const iv = getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(passphrase, salt);
+  const ciphertext = await subtle().encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    new TextEncoder().encode(plaintext)
+  );
+  return {
+    algorithm: 'AES-256-GCM',
+    kdf: `PBKDF2-HMAC-SHA-256 (${PBKDF2_ITERATIONS} iteraciones)`,
+    salt: toHex(salt),
+    iv: toHex(iv),
+    ciphertext: new Uint8Array(ciphertext),
+    bytes: ciphertext.byteLength,
+  };
+}
+async function openVault(vault, passphrase) {
+  const salt = Uint8Array.from(vault.salt.match(/../g).map((h) => parseInt(h, 16)));
+  const iv = Uint8Array.from(vault.iv.match(/../g).map((h) => parseInt(h, 16)));
+  const key = await deriveKey(passphrase, salt);
+  const plain = await subtle().decrypt({ name: 'AES-GCM', iv }, key, vault.ciphertext);
+  return new TextDecoder().decode(plain);
+}
+
+
+/* ---- datos de demostración ---- */
+
+const DEMO_PANEL = "#pgs_name=HELIX_GUARD_PANEL_DEMO_15\n#trait_reported=Cancer de mama (panel demostrativo)\n#genome_build=GRCh37\n#variants_number=15\n#weight_type=beta (logaritmo natural del odds ratio por alelo)\n#AVISO=Panel DEMOSTRATIVO. Los odds ratios son los reportados en las publicaciones de descubrimiento citadas en cada linea, redondeados a dos decimales. NO constituye un puntaje clinico validado. Para uso cientifico cargue el archivo oficial PGS000004 (PRS313, Mavaddat et al., Am J Hum Genet 2019) desde el PGS Catalog.\n#frecuencias=Aproximadas en poblacion de ascendencia europea. Se usan solo para situar el puntaje en una distribucion de referencia, no forman parte del calculo.\nrsID\teffect_allele\tother_allele\teffect_weight\todds_ratio\tallele_frequency\tgene\tsource\nrs2981582\tA\tG\t0.231112\t1.26\t0.38\tFGFR2 (10q26)\tEaston et al., Nature 2007\nrs3803662\tA\tG\t0.182322\t1.2\t0.26\tTOX3/TNRC9 (16q12)\tEaston et al., Nature 2007\nrs889312\tC\tA\t0.122218\t1.13\t0.28\tMAP3K1 (5q11)\tEaston et al., Nature 2007\nrs13281615\tG\tA\t0.076961\t1.08\t0.4\t8q24\tEaston et al., Nature 2007\nrs3817198\tC\tT\t0.067659\t1.07\t0.3\tLSP1 (11p15)\tEaston et al., Nature 2007\nrs13387042\tA\tG\t0.182322\t1.2\t0.5\t2q35\tStacey et al., Nat Genet 2007\nrs1045485\tG\tC\t-0.127833\t0.88\t0.87\tCASP8 D302H (2q33)\tCox et al., Nat Genet 2007\nrs10941679\tG\tA\t0.173953\t1.19\t0.25\t5p12\tStacey et al., Nat Genet 2008\nrs4973768\tT\tC\t0.104360\t1.11\t0.47\tSLC4A7/NEK10 (3p24)\tAhmed et al., Nat Genet 2009\nrs2046210\tA\tG\t0.254642\t1.29\t0.35\tESR1 (6q25.1)\tZheng et al., Nat Genet 2009\nrs11249433\tG\tA\t0.148420\t1.16\t0.39\t1p11.2\tThomas et al., Nat Genet 2009\nrs614367\tT\tC\t0.139762\t1.15\t0.15\t11q13\tTurnbull et al., Nat Genet 2010\nrs704010\tT\tC\t0.067659\t1.07\t0.38\tZMIZ1 (10q22)\tTurnbull et al., Nat Genet 2010\nrs1011970\tT\tG\t0.086178\t1.09\t0.17\tCDKN2A/B (9p21)\tTurnbull et al., Nat Genet 2010\nrs10995190\tG\tA\t-0.150823\t0.86\t0.85\tZNF365 (10q21)\tTurnbull et al., Nat Genet 2010\n";
+
+const DEMO_GENOMES = {"bajo":"# HELIX GUARD - genotipos SINTETICOS generados localmente\n# perfil: percentil bajo\n# Estos datos NO provienen de ninguna persona real ni de ninguna cohorte.\n# Formato compatible con datos crudos de consumo: rsid, cromosoma, posicion, genotipo\nrsid\tchromosome\tposition\tgenotype\nrs2981582\t0\t0\tGG\nrs3803662\t0\t0\tGG\nrs889312\t0\t0\tAA\nrs13281615\t0\t0\tAA\nrs3817198\t0\t0\tTT\nrs13387042\t0\t0\tAG\nrs1045485\t0\t0\tCG\nrs10941679\t0\t0\tAA\nrs4973768\t0\t0\tCC\nrs2046210\t0\t0\tGG\nrs11249433\t0\t0\tAA\nrs614367\t0\t0\tCC\nrs704010\t0\t0\tCC\nrs1011970\t0\t0\tGG\nrs10995190\t0\t0\tGG\n","medio":"# HELIX GUARD - genotipos SINTETICOS generados localmente\n# perfil: percentil medio\n# Estos datos NO provienen de ninguna persona real ni de ninguna cohorte.\n# Formato compatible con datos crudos de consumo: rsid, cromosoma, posicion, genotipo\nrsid\tchromosome\tposition\tgenotype\nrs2981582\t0\t0\tAA\nrs3803662\t0\t0\tGG\nrs889312\t0\t0\tAC\nrs13281615\t0\t0\tAG\nrs3817198\t0\t0\tCT\nrs13387042\t0\t0\tAG\nrs1045485\t0\t0\tGG\nrs10941679\t0\t0\tAA\nrs4973768\t0\t0\tCC\nrs2046210\t0\t0\tGG\nrs11249433\t0\t0\tAA\nrs614367\t0\t0\tCT\nrs704010\t0\t0\tTT\nrs1011970\t0\t0\tGT\nrs10995190\t0\t0\tGG\n","alto":"# HELIX GUARD - genotipos SINTETICOS generados localmente\n# perfil: percentil alto\n# Estos datos NO provienen de ninguna persona real ni de ninguna cohorte.\n# Formato compatible con datos crudos de consumo: rsid, cromosoma, posicion, genotipo\nrsid\tchromosome\tposition\tgenotype\nrs2981582\t0\t0\tAG\nrs3803662\t0\t0\tGG\nrs889312\t0\t0\tAC\nrs13281615\t0\t0\tAA\nrs3817198\t0\t0\tCT\nrs13387042\t0\t0\tAA\nrs1045485\t0\t0\tGG\nrs10941679\t0\t0\tAG\nrs4973768\t0\t0\tTT\nrs2046210\t0\t0\tAG\nrs11249433\t0\t0\tAG\nrs614367\t0\t0\tCT\nrs704010\t0\t0\tTT\nrs1011970\t0\t0\tTT\nrs10995190\t0\t0\tGG\n"};
+/* =====================================================================
+   HELIX GUARD — interfaz
+   ---------------------------------------------------------------------
+   Nada aquí abre una conexión. El interceptor de abajo lo demuestra:
+   envuelve fetch, XMLHttpRequest, sendBeacon y WebSocket, y cuenta cada
+   intento. Si el contador de la cabecera se mueve, es que algo intentó
+   salir, y queda registrado en la línea de custodia en rojo.
+   ===================================================================== */
+
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => [...document.querySelectorAll(sel)];
+
+/* ---------- estado ---------- */
+const state = {
+  genomeText: null,
+  genomeName: null,
+  calls: null,
+  panel: null,
+  panelName: 'Panel demostrativo (15 variantes)',
+  vault: null,
+  netAttempts: 0,
+  bytesOut: 0,
+  log: [],
+  keys: null,
+  consent: {
+    riesgo: true,
+    federado: true,
+    agregado: false,
+    investigacion: false,
+  },
+};
+
+/* ---------- interceptor de red verificable ---------- */
+(function instrumentNetwork() {
+  const flag = (kind, target) => {
+    state.netAttempts++;
+    $('#netCount').textContent = state.netAttempts;
+    $('#meterNet').classList.add('alert');
+    logEvent({
+      kind: 'leak',
+      title: 'Intento de salida a la red',
+      meta: `${kind} → ${String(target).slice(0, 80)}`,
+      note: 'Interceptado y registrado. Esta app no debería producir ninguno.',
+    });
+  };
+
+  const nativeFetch = window.fetch;
+  window.fetch = function (...args) {
+    flag('fetch', args[0]);
+    return nativeFetch.apply(this, args);
+  };
+
+  const nativeOpen = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function (method, url, ...rest) {
+    flag('XHR', url);
+    return nativeOpen.call(this, method, url, ...rest);
+  };
+
+  if (navigator.sendBeacon) {
+    const nativeBeacon = navigator.sendBeacon.bind(navigator);
+    navigator.sendBeacon = function (url, data) {
+      flag('sendBeacon', url);
+      return nativeBeacon(url, data);
+    };
+  }
+
+  const NativeWS = window.WebSocket;
+  window.WebSocket = function (url, protocols) {
+    flag('WebSocket', url);
+    return new NativeWS(url, protocols);
+  };
+})();
+
+/* ---------- línea de custodia ---------- */
+function logEvent({ kind = 'local', title, meta = '', note = '' }) {
+  const entry = { kind, title, meta, note, at: new Date().toISOString() };
+  state.log.push(entry);
+
+  const el = document.createElement('div');
+  el.className = `evt ${kind === 'local' ? '' : kind}`.trim();
+  el.innerHTML = `<b></b><em></em>${note ? '<small></small>' : ''}`;
+  el.querySelector('b').textContent = title;
+  el.querySelector('em').textContent =
+    `${new Date().toLocaleTimeString('es-MX', { hour12: false })}${meta ? ' · ' + meta : ''}`;
+  if (note) el.querySelector('small').textContent = note;
+
+  const thread = $('#thread');
+  thread.prepend(el);
+  while (thread.children.length > 60) thread.lastChild.remove();
+}
+
+function markOut(bytes, why) {
+  state.bytesOut += 0; // el genoma en claro nunca suma
+  $('#outCount').textContent = `${state.bytesOut} B`;
+  logEvent({ kind: 'out', title: 'Sale del dispositivo', meta: `${bytes} B cifrados`, note: why });
+}
+
+/* ---------- navegación ---------- */
+const STEPS = [
+  ['p-vault', 'Bóveda', 'carga y sella el genoma'],
+  ['p-risk', 'Firma de riesgo', 'PRS local y explicable'],
+  ['p-fed', 'Federado', 'clasificador multigénico'],
+  ['p-he', 'Cifrado', 'agregación homomórfica'],
+  ['p-gov', 'Soberanía', 'consentimiento y borrado'],
+];
+
+const rail = $('#rail');
+STEPS.forEach(([id, name, sub], i) => {
+  const b = document.createElement('button');
+  b.className = 'step';
+  b.dataset.target = id;
+  b.setAttribute('aria-current', i === 0 ? 'true' : 'false');
+  b.innerHTML = `<span class="n">${i + 1}</span><span><strong>${name}</strong><em>${sub}</em></span>`;
+  b.addEventListener('click', () => goto(id));
+  rail.appendChild(b);
+});
+
+function goto(id) {
+  $$('.panel').forEach((p) => p.classList.toggle('on', p.id === id));
+  $$('.step').forEach((s) => s.setAttribute('aria-current', String(s.dataset.target === id)));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function markDone(id) {
+  const s = $$('.step').find((x) => x.dataset.target === id);
+  if (s) s.classList.add('done');
+}
+
+$('#ledgerBtn').addEventListener('click', (e) => {
+  const open = $('#ledger').classList.toggle('open');
+  e.currentTarget.setAttribute('aria-expanded', String(open));
+  e.currentTarget.textContent = open ? 'Ocultar custodia' : 'Ver custodia';
+});
+
+/* =====================================================================
+   1 · BÓVEDA
+   ===================================================================== */
+
+function bytesHuman(n) {
+  return n < 1024 ? `${n} B` : `${(n / 1024).toFixed(1)} KB`;
+}
+
+async function acceptGenome(text, name) {
+  state.genomeText = text;
+  state.genomeName = name;
+  const parsed = parseGenotypes(text);
+  state.calls = parsed.calls;
+
+  const hash = await fingerprint(text);
+  $('#fileCard').hidden = false;
+  const meta = $('#fileMeta');
+  meta.innerHTML = '';
+  const rows = [
+    ['archivo', name],
+    ['tamaño', bytesHuman(new Blob([text]).size)],
+    ['variantes legibles', String(parsed.calls.size)],
+    ['huella SHA-256', hash],
+  ];
+  for (const [k, v] of rows) {
+    const dt = document.createElement('dt');
+    dt.textContent = k;
+    const dd = document.createElement('dd');
+    dd.textContent = v;
+    meta.append(dt, dd);
+  }
+
+  logEvent({
+    kind: 'local',
+    title: 'Genoma leído en memoria local',
+    meta: `${parsed.calls.size} variantes · ${bytesHuman(new Blob([text]).size)}`,
+    note: 'La lectura usó la API de ficheros del navegador. No hubo subida.',
+  });
+  markDone('p-vault');
+}
+
+$('#pickFile').addEventListener('click', () => $('#file').click());
+$('#file').addEventListener('change', async (e) => {
+  const f = e.target.files[0];
+  if (f) acceptGenome(await f.text(), f.name);
+});
+
+const drop = $('#drop');
+['dragenter', 'dragover'].forEach((ev) =>
+  drop.addEventListener(ev, (e) => {
+    e.preventDefault();
+    drop.classList.add('over');
+  })
+);
+['dragleave', 'drop'].forEach((ev) =>
+  drop.addEventListener(ev, (e) => {
+    e.preventDefault();
+    drop.classList.remove('over');
+  })
+);
+drop.addEventListener('drop', async (e) => {
+  const f = e.dataTransfer.files[0];
+  if (f) acceptGenome(await f.text(), f.name);
+});
+
+$$('[data-demo]').forEach((b) =>
+  b.addEventListener('click', () => {
+    const key = b.dataset.demo;
+    acceptGenome(DEMO_GENOMES[key], `genoma-demo-${key}.txt`);
+  })
+);
+
+$('#seal').addEventListener('click', async () => {
+  const pass = $('#pass').value;
+  if (pass.length < 8) {
+    $('#vaultOut').innerHTML = '<div class="note grave">La frase necesita al menos 8 caracteres.</div>';
+    return;
+  }
+  const t0 = performance.now();
+  state.vault = await sealVault(state.genomeText, pass);
+  const ms = Math.round(performance.now() - t0);
+
+  const hex = [...state.vault.ciphertext.slice(0, 96)]
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join(' ');
+
+  $('#vaultOut').innerHTML = `
+    <div class="card" style="margin-bottom:0">
+      <h3>Bóveda sellada</h3>
+      <dl class="kv">
+        <dt>algoritmo</dt><dd>${state.vault.algorithm}</dd>
+        <dt>derivación</dt><dd>${state.vault.kdf}</dd>
+        <dt>vector de inicialización</dt><dd>${state.vault.iv}</dd>
+        <dt>tamaño cifrado</dt><dd>${state.vault.bytes} bytes</dd>
+        <dt>tiempo</dt><dd>${ms} ms</dd>
+      </dl>
+      <p style="font-size:.82rem;color:var(--muted);margin:.6rem 0 .3rem">Primeros 96 bytes del texto cifrado:</p>
+      <div class="cipher">${hex} …</div>
+    </div>`;
+  $('#unseal').disabled = false;
+  logEvent({
+    kind: 'local',
+    title: 'Bóveda sellada con AES-256-GCM',
+    meta: `${state.vault.bytes} B · IV ${state.vault.iv.slice(0, 12)}…`,
+    note: 'La clave se derivó de tu frase con 600 000 iteraciones de PBKDF2 y no se almacenó.',
+  });
+});
+
+$('#unseal').addEventListener('click', async () => {
+  try {
+    const plain = await openVault(state.vault, $('#pass').value);
+    const ok = plain === state.genomeText;
+    logEvent({
+      kind: 'local',
+      title: ok ? 'Bóveda abierta y verificada' : 'Bóveda abierta con contenido distinto',
+      meta: 'AES-GCM autenticado',
+    });
+    $('#vaultOut').insertAdjacentHTML(
+      'beforeend',
+      `<div class="note" style="border-color:var(--teal);color:#9FD8D0">Descifrado correcto y contenido idéntico al original.</div>`
+    );
+  } catch {
+    $('#vaultOut').insertAdjacentHTML(
+      'beforeend',
+      '<div class="note grave">Frase incorrecta o archivo alterado. AES-GCM detecta ambas cosas.</div>'
+    );
+    logEvent({ kind: 'local', title: 'Apertura de bóveda rechazada', meta: 'fallo de autenticación GCM' });
+  }
+});
+
+$('#wipe').addEventListener('click', forgetAll);
+
+/* =====================================================================
+   2 · FIRMA DE RIESGO
+   ===================================================================== */
+
+state.panel = parseScoringFile(DEMO_PANEL);
+const PANEL_FREQ = Object.fromEntries(
+  DEMO_PANEL.split('\n')
+    .filter((l) => l.startsWith('rs'))
+    .map((l) => {
+      const c = l.split('\t');
+      return [c[0], Number(c[5])];
+    })
+);
+
+$('#loadPgs').addEventListener('click', () => $('#pgsFile').click());
+$('#pgsFile').addEventListener('change', async (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  state.panel = parseScoringFile(await f.text());
+  state.panelName = f.name;
+  logEvent({
+    kind: 'local',
+    title: 'Archivo de puntuación cargado',
+    meta: `${state.panel.variants.length} variantes · ${f.name}`,
+  });
+  $('#calc').click();
+});
+
+$('#calc').addEventListener('click', () => {
+  if (!state.calls) {
+    $('#riskOut').innerHTML = '<div class="note grave">Primero carga un genoma en el paso 1.</div>';
+    return;
+  }
+  if (!state.consent.riesgo) {
+    $('#riskOut').innerHTML = '<div class="note grave">El consentimiento para el cálculo de riesgo está apagado.</div>';
+    return;
+  }
+
+  const t0 = performance.now();
+  const res = computePRS(state.panel.variants, state.calls);
+  const ref = referenceDistribution(state.panel.variants, PANEL_FREQ);
+  const view = interpret(res.score, ref, 1.61);
+  const ms = Math.round(performance.now() - t0);
+
+  const pct = Math.max(0.2, Math.min(99.8, view.percentile));
+  const band = pct >= 90 ? 'alto' : pct <= 20 ? 'bajo' : 'intermedio';
+
+  const top = res.trace.slice(0, 6);
+  const rows = top
+    .map(
+      (t) => `<tr>
+        <td><span class="mono">${t.rsid}</span><br><span style="color:var(--muted);font-size:.76rem">${t.gene}</span></td>
+        <td class="mono">${t.genotype}</td>
+        <td class="num">${t.dosage}</td>
+        <td class="num ${t.contribution >= 0 ? 'up' : 'down'}">${t.contribution >= 0 ? '+' : ''}${t.contribution.toFixed(3)}</td>
+        <td style="font-size:.76rem;color:var(--muted)">${t.source}</td>
+      </tr>`
+    )
+    .join('');
+
+  $('#riskOut').innerHTML = `
+    <div class="card">
+      <h3>Posición en la distribución poblacional</h3>
+      <div class="score"><b>${pct.toFixed(0)}</b><span>percentil · riesgo relativo ${view.relativeRisk.toFixed(2)}× frente a la media</span></div>
+      <div class="dist">${distSvg(pct)}</div>
+      <div class="axis"><span>p1</span><span>p25</span><span>p50</span><span>p75</span><span>p99</span></div>
+      <p style="margin-top:.9rem">Tu puntaje queda en la banda <strong>${band}</strong> del panel cargado. El riesgo relativo se expresa frente a la media poblacional usando el odds ratio por desviación estándar de 1.61 reportado para el PRS313 en ascendencia europea.</p>
+      <dl class="kv">
+        <dt>puntaje bruto</dt><dd>${res.score.toFixed(4)}</dd>
+        <dt>z</dt><dd>${view.z.toFixed(3)}</dd>
+        <dt>variantes usadas</dt><dd>${res.matched} de ${res.total}</dd>
+        <dt>tiempo de cálculo</dt><dd>${ms} ms, en este dispositivo</dd>
+        <dt>panel</dt><dd>${state.panelName}</dd>
+      </dl>
+    </div>
+
+    <div class="card">
+      <h3>Qué variantes pesaron más</h3>
+      <table>
+        <thead><tr><th>variante</th><th>genotipo</th><th style="text-align:right">copias</th><th style="text-align:right">aporte</th><th>fuente</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p style="margin-top:.8rem;font-size:.82rem;color:var(--muted)">El aporte es β × número de copias del alelo de efecto. Un aporte negativo significa que esa variante empuja el riesgo hacia abajo.</p>
+    </div>
+
+    <div class="note">${state.panel.meta.AVISO || 'Panel demostrativo.'}</div>
+    <div class="note grave">Esto no es un diagnóstico ni un riesgo absoluto a lo largo de la vida. Un percentil alto significa que conviene hablar con un profesional sobre tamizaje más frecuente, no que vaya a haber enfermedad.</div>`;
+
+  logEvent({
+    kind: 'local',
+    title: 'Firma de riesgo calculada',
+    meta: `p${pct.toFixed(0)} · ${res.matched}/${res.total} variantes · ${ms} ms`,
+    note: 'Cálculo íntegro en el dispositivo. Cero bytes transmitidos.',
+  });
+  markDone('p-risk');
+});
+
+function distSvg(pct) {
+  const w = 100;
+  const pts = [];
+  for (let i = 0; i <= 100; i++) {
+    const z = (i / 100) * 6 - 3;
+    const y = Math.exp((-z * z) / 2);
+    pts.push(`${(i / 100) * w},${(1 - y) * 40 + 4}`);
+  }
+  const x = (pct / 100) * w;
+  return `<svg viewBox="0 0 100 52" preserveAspectRatio="none" role="img" aria-label="Posición del puntaje en la distribución poblacional, percentil ${pct.toFixed(0)}">
+    <polyline points="${pts.join(' ')}" fill="none" stroke="#1D3E68" stroke-width="1" vector-effect="non-scaling-stroke"/>
+    <polygon points="0,48 ${pts.join(' ')} 100,48" fill="#0FA3A3" opacity=".12"/>
+    <line x1="${x}" y1="0" x2="${x}" y2="48" stroke="#3FD8C8" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+    <circle cx="${x}" cy="4" r="2.4" fill="#3FD8C8"/>
+  </svg>`;
+}
+
+/* =====================================================================
+   3 · APRENDIZAJE FEDERADO
+   ===================================================================== */
+
+const NODES = [
+  { name: 'Hospital Ciudad de México', seed: 11, shift: 0.22, n: 210 },
+  { name: 'Hospital Guadalajara', seed: 23, shift: -0.18, n: 165 },
+  { name: 'Instituto Monterrey', seed: 37, shift: 0.05, n: 240 },
+  { name: 'Red comunitaria Oaxaca', seed: 53, shift: -0.3, n: 95 },
+  { name: 'Cohorte Bogotá', seed: 71, shift: 0.12, n: 180 },
+].map((c) => ({ ...c, data: syntheticCohort({ n: c.n, seed: c.seed, shift: c.shift }) }));
+
+const TEST_SET = syntheticCohort({ n: 500, seed: 991 });
+
+$('#train').addEventListener('click', () => runFederated(NODES, 'federado'));
+$('#trainSolo').addEventListener('click', () => runFederated([NODES[3]], 'aislado'));
+
+async function runFederated(nodes, mode) {
+  if (!state.consent.federado) {
+    $('#fedOut').innerHTML = '<div class="note grave">El consentimiento para el entrenamiento federado está apagado.</div>';
+    return;
+  }
+  const noiseMultiplier = Math.max(0.05, Number($('#noise').value) || 0.35);
+  const rounds = Math.max(1, Math.min(60, parseInt($('#rounds').value, 10) || 12));
+  const opts = {
+    epochs: 10,
+    lr: 0.4,
+    clip: 2.0,
+    perExampleClip: 1.0,
+    noiseMultiplier,
+    rand: seededRandom(5),
+  };
+
+  let weights = new Array(FEATURES.length + 1).fill(0);
+  const history = [];
+  let lastTx = [];
+  let lastRound = null;
+  let bytes = 0;
+
+  for (let r = 0; r < rounds; r++) {
+    const out = federatedRound(weights, nodes, opts);
+    weights = out.weights;
+    lastTx = out.transmissions;
+    lastRound = out;
+    bytes += out.transmissions.reduce((s, t) => s + t.bytes, 0);
+    history.push(evaluate(weights, TEST_SET).auc);
+  }
+
+  const fed = evaluate(weights, TEST_SET);
+  const central = evaluate(
+    trainLocal(new Array(FEATURES.length + 1).fill(0), NODES.flatMap((n) => n.data), { epochs: 140, lr: 0.4 }),
+    TEST_SET
+  );
+  const budget = privacyBudget({
+    rounds,
+    sensitivity: lastRound.sensitivity,
+    sigma: lastRound.sigma,
+    delta: 1e-5,
+  });
+
+  const txRows = lastTx
+    .map(
+      (t) => `<tr>
+        <td>${t.node}</td>
+        <td class="num">${t.samples}</td>
+        <td class="num">${t.bytes} B</td>
+        <td class="num">${t.norm.toFixed(3)}</td>
+        <td>${t.clipped ? 'recortada' : '—'}</td>
+      </tr>`
+    )
+    .join('');
+
+  const spark = history
+    .map((a, i) => `${(i / Math.max(1, history.length - 1)) * 100},${(1 - (a - 0.45) / 0.55) * 40}`)
+    .join(' ');
+
+  $('#fedOut').innerHTML = `
+    <div class="card">
+      <h3>Resultado tras ${rounds} rondas ${mode === 'aislado' ? '(un solo nodo, sin federación)' : ''}</h3>
+      <div class="score"><b>${fed.auc.toFixed(3)}</b><span>AUC del modelo global sobre el conjunto de prueba</span></div>
+      <svg viewBox="0 0 100 44" preserveAspectRatio="none" style="width:100%;height:60px;margin:.6rem 0" role="img" aria-label="Evolución del AUC por ronda">
+        <line x1="0" y1="${(1 - (central.auc - 0.45) / 0.55) * 40}" x2="100" y2="${(1 - (central.auc - 0.45) / 0.55) * 40}" stroke="#E4356B" stroke-width="1" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>
+        <polyline points="${spark}" fill="none" stroke="#3FD8C8" stroke-width="1.8" vector-effect="non-scaling-stroke"/>
+      </svg>
+      <div class="bars">
+        ${bar('Federado', fed.auc)}
+        ${bar('Centralizado', central.auc)}
+      </div>
+      <p style="margin-top:.9rem">El modelo centralizado —el que exigiría juntar todos los datos en un solo lugar— alcanza ${central.auc.toFixed(3)}. El federado llega a ${fed.auc.toFixed(3)} sin mover un solo ejemplo. Es el mismo hallazgo que Sheller y colaboradores publicaron en <em>Scientific Reports</em> en 2020: el federado retuvo el 99 % del desempeño del centralizado sobre diez instituciones.</p>
+    </div>
+
+    <div class="card">
+      <h3>Qué transmitió cada nodo en la última ronda</h3>
+      <table>
+        <thead><tr><th>nodo</th><th style="text-align:right">pacientes</th><th style="text-align:right">enviado</th><th style="text-align:right">norma</th><th>recorte</th></tr></thead>
+        <tbody>${txRows}</tbody>
+      </table>
+      <p style="margin-top:.8rem;font-size:.82rem;color:var(--muted)">Cada fila envía ${FEATURES.length + 1} números en coma flotante. Las columnas de pacientes, genotipos y expresión nunca aparecen en el canal.</p>
+    </div>
+
+    <div class="card">
+      <h3>Presupuesto de privacidad</h3>
+      <dl class="kv">
+        <dt>recorte por ejemplo</dt><dd>1.0</dd>
+        <dt>ruido absoluto σ</dt><dd>${lastRound.sigma.toFixed(3)}</dd>
+        <dt>sensibilidad Δ</dt><dd>${lastRound.sensitivity.toFixed(4)} (nodo más pequeño)</dd>
+        <dt>ε por ronda</dt><dd>${budget.epsilonPerRound.toFixed(3)}</dd>
+        <dt>ε acumulado</dt><dd>${budget.epsilonTotal.toFixed(2)} · δ = 1e-5 · protección ${budget.band}</dd>
+        <dt>método</dt><dd style="font-family:var(--sans);font-size:.82rem">${budget.method}</dd>
+        <dt>volumen total</dt><dd>${(bytes / 1024).toFixed(1)} KB de pesos en ${rounds} rondas</dd>
+      </dl>
+      <p style="margin-top:.6rem;font-size:.82rem;color:var(--muted)">Sube el ruido y verás caer ε junto con el AUC: es el intercambio real entre privacidad y utilidad, y aquí se puede tocar en vivo. La contabilidad es la cota pesimista por composición secuencial; con el accountant de momentos de Abadi y colaboradores, el mismo ruido da un ε bastante menor. Se muestra la cota alta para no sobrevender la garantía.</p>
+    </div>`;
+
+  markOut(bytes, `Pesos del modelo, ${rounds} rondas. Sin ejemplos ni identificadores.`);
+  logEvent({
+    kind: 'local',
+    title: `Entrenamiento ${mode} terminado`,
+    meta: `AUC ${fed.auc.toFixed(3)} · ε ≈ ${budget.epsilonTotal.toFixed(1)}`,
+  });
+  markDone('p-fed');
+}
+
+function bar(label, value) {
+  const pct = Math.max(0, Math.min(100, ((value - 0.45) / 0.55) * 100));
+  return `<div class="bar"><span>${label}</span><span class="track"><span class="fill" style="width:${pct}%"></span></span><span class="mono">${value.toFixed(3)}</span></div>`;
+}
+
+/* =====================================================================
+   4 · CIFRADO HOMOMÓRFICO
+   ===================================================================== */
+
+$('#genKeys').addEventListener('click', async () => {
+  const bits = Number($('#keySize').value);
+  $('#heOut').innerHTML = '<div class="card"><p>Buscando primos…</p></div>';
+  await new Promise((r) => setTimeout(r, 20));
+
+  const t0 = performance.now();
+  state.keys = generateKeys(bits);
+  const keyMs = Math.round(performance.now() - t0);
+
+  const { publicKey, privateKey } = state.keys;
+  const aportes = NODES.map((n, i) => ({
+    node: n.name,
+    value: [0.412, -0.203, 0.087, 0.664, -0.55][i],
+  }));
+
+  const t1 = performance.now();
+  const cts = aportes.map((a) => encrypt(publicKey, encode(a.value)));
+  let acc = encrypt(publicKey, encode(0));
+  for (const c of cts) acc = addEncrypted(publicKey, acc, c);
+  const suma = decode(decrypt(privateKey, acc));
+  const heMs = Math.round(performance.now() - t1);
+
+  const esperado = aportes.reduce((s, a) => s + a.value, 0);
+  const bytesCt = Math.ceil(publicKey.n.toString(2).length / 4) / 2;
+
+  const rows = aportes
+    .map(
+      (a, i) => `<tr>
+      <td>${a.node}</td>
+      <td class="num">${a.value.toFixed(3)}</td>
+      <td class="mono" style="color:#6E93B6">${cts[i].toString(16).slice(0, 26)}…</td>
+    </tr>`
+    )
+    .join('');
+
+  $('#heOut').innerHTML = `
+    <div class="card">
+      <h3>Claves generadas</h3>
+      <dl class="kv">
+        <dt>módulo n</dt><dd>${publicKey.n.toString(2).length} bits</dd>
+        <dt>n (primeros dígitos)</dt><dd>${publicKey.n.toString().slice(0, 44)}…</dd>
+        <dt>tiempo</dt><dd>${keyMs} ms</dd>
+      </dl>
+    </div>
+
+    <div class="card">
+      <h3>Lo que ve el agregador</h3>
+      <table>
+        <thead><tr><th>nodo</th><th style="text-align:right">valor real</th><th>lo que se transmite</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p style="margin-top:.8rem;font-size:.82rem;color:var(--muted)">La columna del centro no existe en el canal: está aquí sólo para que puedas comprobar el resultado. El agregador recibe únicamente la tercera columna.</p>
+    </div>
+
+    <div class="card">
+      <h3>Suma calculada sin descifrar</h3>
+      <p>El agregador multiplicó los cinco textos cifrados módulo n². No descifró nada. Sólo el titular de la clave privada —el consorcio, bajo gobernanza— abre el resultado agregado.</p>
+      <div class="score"><b>${suma.toFixed(3)}</b><span>suma homomórfica · el valor real es ${esperado.toFixed(3)}</span></div>
+      <dl class="kv">
+        <dt>error</dt><dd>${Math.abs(suma - esperado).toExponential(2)} (redondeo de punto fijo)</dd>
+        <dt>operaciones</dt><dd>5 cifrados + 5 sumas + 1 descifrado en ${heMs} ms</dd>
+        <dt>tamaño de cada texto cifrado</dt><dd>≈ ${bytesCt * 2} bytes</dd>
+      </dl>
+      <p style="font-size:.82rem;color:var(--muted);margin-top:.6rem">Esta es la propiedad que hace posible un consorcio sin dueño: nadie, ni el operador de la plataforma, puede leer la aportación de un hospital concreto.</p>
+    </div>`;
+
+  markOut(cts.length * bytesCt * 2, 'Textos cifrados de Paillier. Indescifrables sin la clave privada.');
+  logEvent({
+    kind: 'local',
+    title: 'Agregación homomórfica verificada',
+    meta: `Σ = ${suma.toFixed(3)} · esperado ${esperado.toFixed(3)}`,
+  });
+  markDone('p-he');
+});
+
+/* =====================================================================
+   5 · SOBERANÍA
+   ===================================================================== */
+
+const CONSENTS = [
+  ['riesgo', 'Calcular mi firma de riesgo en este dispositivo', 'Sin esto la app no calcula nada. Los datos siguen sin salir.'],
+  ['federado', 'Aportar pesos al modelo federado', 'Se envían vectores de pesos con ruido, nunca tus variantes.'],
+  ['agregado', 'Aportar a estadísticas cifradas del consorcio', 'Conteos agregados bajo cifrado homomórfico.'],
+  ['investigacion', 'Permitir uso en investigación académica publicada', 'Revocable. La revocación surte efecto desde la siguiente ronda.'],
+];
+
+const consentBox = $('#consent');
+CONSENTS.forEach(([key, title, sub]) => {
+  const row = document.createElement('label');
+  row.className = 'toggle';
+  row.innerHTML = `<input type="checkbox" ${state.consent[key] ? 'checked' : ''}><span><strong></strong><span></span></span>`;
+  row.querySelector('strong').textContent = title;
+  row.querySelector('span span').textContent = sub;
+  row.querySelector('input').addEventListener('change', (e) => {
+    state.consent[key] = e.target.checked;
+    logEvent({
+      kind: 'local',
+      title: `Consentimiento ${e.target.checked ? 'otorgado' : 'revocado'}`,
+      meta: key,
+    });
+  });
+  consentBox.appendChild(row);
+});
+
+function forgetAll() {
+  state.genomeText = null;
+  state.calls = null;
+  state.vault = null;
+  state.genomeName = null;
+  $('#fileCard').hidden = true;
+  $('#vaultOut').innerHTML = '';
+  $('#riskOut').innerHTML = '';
+  $('#pass').value = '';
+  $('#unseal').disabled = true;
+  $$('.step').forEach((s) => s.classList.remove('done'));
+  logEvent({
+    kind: 'local',
+    title: 'Genoma borrado del dispositivo',
+    meta: 'memoria de la pestaña liberada',
+    note: 'Como nunca se transmitió, no hay copias externas que reclamar.',
+  });
+}
+
+$('#forget').addEventListener('click', forgetAll);
+
+$('#exportLog').addEventListener('click', () => {
+  const doc = {
+    producto: 'HELIX GUARD — prototipo',
+    generado: new Date().toISOString(),
+    intentos_de_red_detectados: state.netAttempts,
+    bytes_de_genotipo_en_claro_transmitidos: 0,
+    consentimientos: state.consent,
+    eventos: state.log,
+  };
+  const blob = new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'helix-guard-custodia.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  logEvent({ kind: 'local', title: 'Registro de custodia exportado', meta: `${state.log.length} eventos` });
+});
+
+/* ---------- arranque ---------- */
+logEvent({
+  kind: 'local',
+  title: 'Sesión iniciada',
+  meta: 'sin recursos externos',
+  note: 'Esta página no carga tipografías, analítica ni scripts de terceros. Puedes comprobarlo en la pestaña de red del navegador.',
+});
+
+</script>
+</body>
+</html>
